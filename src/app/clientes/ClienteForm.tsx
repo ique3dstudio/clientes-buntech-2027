@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { carregarMunicipios, UFS, type IndiceMunicipios, type Municipio } from "@/lib/geo/municipios";
 import { consultarCnpj, geocodificar, type ResultadoGeocodificacao } from "@/lib/geo/consultas";
 import { documentoValido, formatarDocumento, somenteDigitos } from "@/lib/documento";
+import { formatarTelefone } from "@/lib/enriquecimento";
 import { SeletorPonto, type Ponto } from "@/components/SeletorPonto";
 import type { Papel } from "@/lib/papeis";
 
@@ -17,6 +18,10 @@ type Form = {
   porte: string; equipamento: string; potencial_ton_ano: string; ritmo_ton_mes: string;
   alerta_financeiro: string; condicao_pagamento: string; observacoes: string;
 };
+type ContatoForm = { nome: string; cargo: string; telefone: string; email: string };
+type Sugestoes = { sites: { url: string; titulo: string }[]; emails: string[]; telefones: string[] };
+const CONTATO_VAZIO: ContatoForm = { nome: "", cargo: "", telefone: "", email: "" };
+
 const VAZIO: Form = {
   nome: "", razao_social: "", documento: "", site: "", email: "", telefone: "", endereco: "", cep: "", cidade: "", uf: "",
   municipio_ibge: "", status: "prospect", etapa_id: "", motivo_perda_id: "", vendedor_id: "", porte: "", equipamento: "",
@@ -49,6 +54,10 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
   const [sugestoes, setSugestoes] = useState<Municipio[]>([]);
   const [consultando, setConsultando] = useState(false);
   const [achados, setAchados] = useState<ResultadoGeocodificacao[]>([]);
+  const [contatos, setContatos] = useState<ContatoForm[]>([]);
+  const [buscandoWeb, setBuscandoWeb] = useState(false);
+  const [sugestoes_web, setSugestoesWeb] = useState<Sugestoes | null>(null);
+  const [localSugerido, setLocalSugerido] = useState<string | null>(null);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
 
@@ -66,9 +75,10 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
       if (!vivo) return;
       setEtapas(e.data ?? []); setMotivos(m.data ?? []); setListaFrentes(fr.data ?? []); setVendedores(v.data ?? []); setIdx(municipios);
       if (!clienteId) return;
-      const [c, mapa] = await Promise.all([
+      const [c, mapa, ct] = await Promise.all([
         supabase.from("clientes").select("*").eq("id", clienteId).single(),
         supabase.from("clientes_mapa").select("lat, lng, frentes").eq("id", clienteId).single(),
+        supabase.from("contatos").select("nome, cargo, telefone, email").eq("cliente_id", clienteId).order("principal", { ascending: false }),
       ]);
       if (!vivo) return;
       if (c.error || !c.data) { setErro("Cliente não encontrado ou sem permissão de acesso."); setCarregando(false); return; }
@@ -82,6 +92,7 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
         ritmo_ton_mes: s(d.ritmo_ton_mes), alerta_financeiro: s(d.alerta_financeiro), condicao_pagamento: s(d.condicao_pagamento),
         observacoes: s(d.observacoes),
       });
+      setContatos((ct.data ?? []).map((x) => ({ nome: x.nome ?? "", cargo: x.cargo ?? "", telefone: x.telefone ?? "", email: x.email ?? "" })));
       setVendedorOriginal(s(d.vendedor_id));
       setPrecisao(d.localizacao_precisao);
       if (mapa.data?.lat != null && mapa.data.lng != null) setPonto({ lat: mapa.data.lat, lng: mapa.data.lng });
@@ -108,20 +119,58 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
     try {
       const d = await consultarCnpj(docDigitos);
       if (!d) { setAviso("CNPJ não encontrado na Receita Federal."); return; }
+      const tel = d.telefone ? formatarTelefone(d.telefone) : "";
+      const mun = d.cidade && idx ? idx.achar(d.cidade, d.uf) : null;
       setF((s) => ({
         ...s,
         razao_social: s.razao_social || d.razao_social || "",
         nome: s.nome || d.nome_fantasia || d.razao_social || "",
         email: s.email || d.email?.toLowerCase() || "",
-        telefone: s.telefone || d.telefone || "",
+        telefone: s.telefone || tel,
         cep: s.cep || d.cep || "",
+        endereco: s.endereco || d.endereco || "",
+        cidade: s.cidade || mun?.nome || d.cidade || "",
+        uf: s.uf || mun?.uf || d.uf || "",
+        municipio_ibge: s.municipio_ibge || mun?.ibge || "",
       }));
+      if (d.responsavel || tel) {
+        setContatos((lista) =>
+          lista.some((c) => c.nome || c.telefone) ? lista : [{ nome: d.responsavel?.nome ?? "", cargo: d.responsavel?.cargo ?? "", telefone: tel, email: "" }, ...lista],
+        );
+      }
+      // posiciona o pino pelo endereço da Receita (só se ainda não há ponto)
+      let posicionou = false;
+      if (!ponto) {
+        try {
+          const consulta = [d.endereco, d.cidade, d.uf, "Brasil"].filter(Boolean).join(", ");
+          const r = (await geocodificar(consulta))[0] ?? (d.cep ? (await geocodificar(`${d.cep}, Brasil`))[0] : undefined);
+          if (r) { setPonto({ lat: r.lat, lng: r.lng }); setPrecisao("exata"); posicionou = true; }
+          else if (mun) { setPonto({ lat: mun.lat, lng: mun.lng }); setPrecisao("cidade"); posicionou = true; }
+        } catch { if (mun) { setPonto({ lat: mun.lat, lng: mun.lng }); setPrecisao("cidade"); posicionou = true; } }
+      }
+      setLocalSugerido(`${d.endereco ?? ""} — ${d.cidade ?? ""}/${d.uf ?? ""}`);
       setAviso(
-        `Preenchido pela Receita${d.situacao ? ` (situação: ${d.situacao})` : ""}. O endereço da Receita é o da matriz (${d.cidade}/${d.uf}) — ` +
-          "informe aqui a unidade de produção, se for diferente.",
+        `Dados preenchidos pela Receita${d.situacao ? ` (situação cadastral: ${d.situacao})` : ""}${posicionou ? " e o ponto foi posicionado pelo endereço" : ""}. ` +
+          "Atenção: o endereço da Receita é o cadastrado no CNPJ (pode ser a matriz ou escritório). Confira se é a unidade de produção e, se não for, ajuste o endereço e o pino.",
       );
     } catch (e) { setErro(e instanceof Error ? e.message : String(e)); }
     finally { setConsultando(false); }
+  }
+
+  async function buscarNaInternet() {
+    setBuscandoWeb(true); setErro(null); setSugestoesWeb(null);
+    try {
+      const r = await fetch("/api/enriquecer", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome: f.nome, razao_social: f.razao_social, cidade: f.cidade, uf: f.uf }),
+      });
+      if (r.status === 501) throw new Error("A busca na internet ainda não foi ativada neste app (falta configurar a chave FIRECRAWL_API_KEY na Vercel).");
+      const j = await r.json();
+      if (!r.ok) throw new Error("Não foi possível pesquisar agora. Tente de novo em instantes.");
+      if (!j.sites.length && !j.emails.length && !j.telefones.length) setAviso("A pesquisa não encontrou site ou contatos com confiança. Preencha manualmente.");
+      setSugestoesWeb(j as Sugestoes);
+    } catch (e) { setErro(e instanceof Error ? e.message : String(e)); }
+    finally { setBuscandoWeb(false); }
   }
 
   async function buscarEndereco() {
@@ -169,6 +218,15 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
         if (error) throw error;
         id = data.id as string;
       }
+      // contatos: regrava a lista (o primeiro é o principal)
+      await supabase.from("contatos").delete().eq("cliente_id", id);
+      const lista = contatos.filter((c) => c.nome.trim() || c.telefone.trim() || c.email.trim());
+      if (lista.length) {
+        const { error } = await supabase.from("contatos").insert(
+          lista.map((c, i) => ({ cliente_id: id!, nome: nulo(c.nome), cargo: nulo(c.cargo), telefone: nulo(c.telefone), email: nulo(c.email), principal: i === 0 })),
+        );
+        if (error) throw error;
+      }
       // frentes: regrava as escolhidas como definidas à mão
       const { data: fr } = await supabase.from("frentes").select("id, slug");
       await supabase.from("cliente_frentes").delete().eq("cliente_id", id);
@@ -213,6 +271,47 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
         <label className="block">{rotulo("Site")}<input className={campo} value={f.site} onChange={(e) => set("site", e.target.value)} placeholder="https://" /></label>
         <label className="block">{rotulo("E-mail")}<input type="email" className={campo} value={f.email} onChange={(e) => set("email", e.target.value)} /></label>
         <label className="block">{rotulo("Telefone")}<input className={campo} value={f.telefone} onChange={(e) => set("telefone", e.target.value)} /></label>
+        <div className="sm:col-span-2">
+          <button type="button" onClick={buscarNaInternet} disabled={buscandoWeb || !(f.nome || f.razao_social)}
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50 disabled:opacity-40">
+            {buscandoWeb ? "Pesquisando na internet…" : "Buscar site e contatos na internet"}
+          </button>
+          {sugestoes_web && (
+            <div className="mt-2 space-y-2 rounded-lg bg-slate-50 p-3 text-sm ring-1 ring-slate-200">
+              <p className="text-xs text-slate-500">Sugestões da internet — confira antes de usar.</p>
+              {sugestoes_web.sites.map((x) => (
+                <p key={x.url}>Site: <button type="button" className="text-brand-blue underline" onClick={() => set("site", x.url)}>{x.url}</button> <span className="text-slate-400">{x.titulo}</span></p>
+              ))}
+              {sugestoes_web.emails.length > 0 && (
+                <p>E-mails: {sugestoes_web.emails.map((e) => <button key={e} type="button" className="mr-2 text-brand-blue underline" onClick={() => set("email", e)}>{e}</button>)}</p>
+              )}
+              {sugestoes_web.telefones.length > 0 && (
+                <p>Telefones: {sugestoes_web.telefones.map((t) => (
+                  <button key={t} type="button" className="mr-2 text-brand-blue underline"
+                    onClick={() => (f.telefone ? setContatos((l) => [...l, { ...CONTATO_VAZIO, telefone: formatarTelefone(t) }]) : set("telefone", formatarTelefone(t)))}>
+                    {formatarTelefone(t)}
+                  </button>
+                ))}</p>
+              )}
+            </div>
+          )}
+        </div>
+      </Secao>
+
+      <Secao titulo="Pessoas de contato" descricao="Quem atende pelo telefone: nome, cargo e telefone. O primeiro é o contato principal.">
+        <div className="space-y-3 sm:col-span-2">
+          {contatos.length === 0 && <p className="text-sm text-slate-400">Nenhum contato cadastrado.</p>}
+          {contatos.map((c, i) => (
+            <div key={i} className="grid gap-2 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200 sm:grid-cols-[1.2fr_1fr_1fr_1.2fr_auto]">
+              <input className={campo} placeholder="Nome" value={c.nome} onChange={(e) => setContatos((l) => l.map((x, j) => (j === i ? { ...x, nome: e.target.value } : x)))} />
+              <input className={campo} placeholder="Cargo" value={c.cargo} onChange={(e) => setContatos((l) => l.map((x, j) => (j === i ? { ...x, cargo: e.target.value } : x)))} />
+              <input className={campo} placeholder="Telefone" value={c.telefone} onChange={(e) => setContatos((l) => l.map((x, j) => (j === i ? { ...x, telefone: e.target.value } : x)))} />
+              <input className={campo} placeholder="E-mail" value={c.email} onChange={(e) => setContatos((l) => l.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)))} />
+              <button type="button" onClick={() => setContatos((l) => l.filter((_, j) => j !== i))} className="rounded-lg px-2 text-slate-400 hover:bg-slate-100" aria-label="Remover contato">✕</button>
+            </div>
+          ))}
+          <button type="button" onClick={() => setContatos((l) => [...l, { ...CONTATO_VAZIO }])} className="text-sm font-medium text-brand-blue hover:underline">+ Adicionar contato</button>
+        </div>
       </Secao>
 
       <Secao titulo="Unidade de produção" descricao="Informe sempre o local onde o cliente produz/trata/beneficia as sementes — nunca revenda, loja ou filial comercial.">
@@ -254,6 +353,7 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
               ))}
             </ul>
           )}
+          {localSugerido && <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">Local sugerido pelo cadastro da Receita: {localSugerido}. Confirme se é a unidade de produção.</p>}
           <SeletorPonto ponto={ponto} aoMudar={(p) => { setPonto(p); setPrecisao("manual"); }} />
           <p className="mt-1 text-xs text-slate-500">
             {ponto ? (precisao === "cidade" ? "Ponto aproximado (centro da cidade) — ajuste para a unidade." : "Ponto definido.") : "Sem ponto: o cliente não aparece no mapa."}

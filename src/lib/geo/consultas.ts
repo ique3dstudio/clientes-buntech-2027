@@ -10,6 +10,8 @@ export type DadosCnpj = {
   telefone: string | null;
   email: string | null;
   situacao: string | null;
+  /** Administrador/sócio indicado na Receita — sugestão de pessoa de contato */
+  responsavel: { nome: string; cargo: string | null } | null;
 };
 
 /** Receita Federal via BrasilAPI. Devolve null se o CNPJ não for encontrado. */
@@ -21,7 +23,11 @@ export async function consultarCnpj(cnpj: string): Promise<DadosCnpj | null> {
   const s = (k: string) => (d[k] == null || d[k] === "" ? null : String(d[k]).trim());
   const rua = [s("descricao_tipo_de_logradouro"), s("logradouro")].filter(Boolean).join(" ");
   const endereco = [rua, s("numero"), s("complemento"), s("bairro")].filter(Boolean).join(", ") || null;
+  const qsa = (Array.isArray(d.qsa) ? d.qsa : []) as unknown as { nome_socio?: string; qualificacao_socio?: string }[];
+  const chefe = qsa.find((q) => /administrador|diretor|presidente/i.test(q.qualificacao_socio ?? "")) ?? qsa[0];
+  const nomeProprio = (t: string) => t.toLowerCase().replace(/(^|\s)(\p{L})/gu, (_, a, b) => a + b.toUpperCase());
   return {
+    responsavel: chefe?.nome_socio ? { nome: nomeProprio(chefe.nome_socio), cargo: chefe.qualificacao_socio ?? null } : null,
     razao_social: s("razao_social"),
     nome_fantasia: s("nome_fantasia"),
     endereco,

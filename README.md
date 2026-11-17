@@ -17,6 +17,12 @@ npm install
 npm run dev
 ```
 
+## Variáveis de ambiente
+| Variável | Para quê |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Conexão com o Supabase (obrigatórias) |
+| `FIRECRAWL_API_KEY` | *(opcional, só servidor)* ativa o botão "Buscar site e contatos na internet" do cadastro de cliente |
+
 ## Scripts
 | Comando | O que faz |
 |---|---|
