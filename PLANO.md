@@ -44,8 +44,8 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 - Camada opcional de contexto agrícola: divisão por UF/município (IBGE).
 
 ### 3.2 Territórios
-- Cadastro do território = **conjunto de estados/municípios** atribuídos ao vendedor (base oficial IBGE), unificados em um único contorno; ou **polígono desenhado à mão** para casos especiais.
-- Editor visual (admin): adicionar/remover municípios, desenhar, atribuir vendedor.
+- Território = **polígono desenhado à mão** no mapa pelo admin (vértices editáveis, vários polígonos por vendedor, com encaixe opcional nas divisas de UF/município do IBGE para não sobrar fresta). A base IBGE fica como camada de referência.
+- Editor visual (admin): desenhar, editar vértices, dividir/unir, atribuir vendedor.
 - Detecção de **sobreposição e buracos** (áreas sem dono) com alerta.
 - Histórico de alterações de território (quem mudou, quando) — importante para comissão/auditoria.
 - Cliente é atribuído automaticamente ao vendedor do território onde cai (com possibilidade de exceção manual).
@@ -128,7 +128,7 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 ---
 
 ## 5. Design / UX
-- Visual limpo e profissional, identidade Buntech (logo/cores a receber), modo claro e escuro.
+- Visual limpo e profissional, identidade Buntech Agro (logo em `public/brand/`, azul `#0891D1` e verde-água `#17A89A`), logo grande no login e na tela inicial, modo claro e escuro.
 - Layout: mapa em tela cheia + painel lateral recolhível + barra de filtros; no celular, painel como "gaveta" inferior.
 - Legenda sempre visível (frentes × status × vendedores).
 - Acessibilidade: contraste, não depender só de cor (formas diferentes por frente).
@@ -161,14 +161,25 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 
 ---
 
-## 8. Decisões em aberto (preciso de você)
-1. **Territórios**: são por estado inteiro, por municípios ou áreas desenhadas livremente? Existe hoje algum mapa/lista de quem atende o quê?
-2. **Quantos vendedores** e quem precisa ver os clientes dos outros?
-3. **Dados existentes**: você já tem planilha de clientes? Quantos registros aproximadamente?
-4. **Usuários**: só equipe interna ou também representantes externos?
-5. **Cliente nas duas frentes**: confirma que existe sementeira que compra os dois tipos?
-6. **Marca**: tem logo/cores da Buntech para eu aplicar?
-7. **Orçamento de infra**: ok começar nos planos gratuitos (Vercel + Supabase) e migrar para pagos quando crescer?
-8. **Offline em campo** é prioridade já no início ou pode ficar para fase 6?
-9. **Idioma**: 100% português (BR)?
-10. **Integração futura** com ERP/CRM que vocês usam (HubSpot, Apollo, etc.)?
+## 8. Decisões tomadas
+
+| # | Tema | Decisão |
+|---|---|---|
+| 1 | Territórios | **Desenhados à mão** (polígonos livres), não por estado/município. O editor de desenho passa a ser prioridade da Fase 2; a base IBGE vira só camada de referência opcional. |
+| 2 | Vendedores | **5 vendedores**, cada um com cor própria no tracejado. |
+| 3 | Dados existentes | Já existe planilha de clientes → importação (Fase 4) será desenhada sobre as colunas reais dela. **Preciso receber a planilha.** |
+| 4 | Usuários | Equipe interna + **1 representante externo** (perfil "Externo": vê/edita só o próprio território, sem exportar). |
+| 5 | Marca | Logo recebido em `public/brand/logo-buntech-agro.png`. Paleta: azul `#0891D1` e verde-água `#17A89A`. **Logo grande** na tela de login e na tela inicial/cabeçalho do mapa, além de ícone do app (PWA). |
+| 6 | Infra | Começar nos planos gratuitos (Vercel + Supabase). |
+| 7 | Offline | Fora do início; fica na Fase 6. Ver lembrete abaixo. |
+
+### Ainda em aberto
+- Confirmar se existe sementeira que compra as duas frentes (o plano assume que sim).
+- Idioma: assumido 100% português (BR).
+- Integração futura com ERP/CRM (HubSpot, Apollo etc.).
+
+---
+
+## 9. Lembretes para cobrar do usuário
+- **MODO OFFLINE (Fase 6):** o usuário pediu para ser cobrado, mais adiante, de implementar o modo offline (cache dos clientes do território + fila de registros sincronizada). Cobrar ao concluir a Fase 3 ou 4, antes do go-live.
+- Enviar a planilha de clientes atual (para a Fase 4, mas ajuda a definir os campos já na Fase 1).
