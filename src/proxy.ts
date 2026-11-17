@@ -1,11 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase/env";
+import { COOKIE_MANTER, ajustarOpcoes, manterConectado } from "@/lib/supabase/sessao";
 
 const ROTAS_PUBLICAS = ["/login", "/auth"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const manter = manterConectado(request.cookies.get(COOKIE_MANTER)?.value);
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
@@ -13,7 +15,7 @@ export async function proxy(request: NextRequest) {
       setAll: (toSet, headers) => {
         toSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        toSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        toSet.forEach(({ name, value, options }) => response.cookies.set(name, value, ajustarOpcoes(options, manter)));
         Object.entries(headers ?? {}).forEach(([k, v]) => response.headers.set(k, v));
       },
     },

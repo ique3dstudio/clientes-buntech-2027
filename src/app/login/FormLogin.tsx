@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, definirManterConectado } from "@/lib/supabase/client";
 
 type Modo = "entrar" | "cadastrar" | "recuperar";
 
@@ -30,16 +30,20 @@ export function FormLogin() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [manter, setManter] = useState(true);
+  const [naoConfirmado, setNaoConfirmado] = useState(false);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
     setAviso(null);
+    setNaoConfirmado(false);
     setCarregando(true);
     const supabase = createClient();
     const origem = window.location.origin;
     try {
       if (modo === "entrar") {
+        definirManterConectado(manter);
         const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
         if (error) throw error;
         router.replace("/");
@@ -70,10 +74,25 @@ export function FormLogin() {
         setModo("entrar");
       }
     } catch (err) {
-      setErro(traduzErro(err instanceof Error ? err.message : String(err)));
+      const msg = err instanceof Error ? err.message : String(err);
+      setNaoConfirmado(/email not confirmed/i.test(msg));
+      setErro(traduzErro(msg));
     } finally {
       setCarregando(false);
     }
+  }
+
+  async function reenviarConfirmacao() {
+    setCarregando(true);
+    const { error } = await createClient().auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setCarregando(false);
+    setErro(error ? traduzErro(error.message) : null);
+    setNaoConfirmado(false);
+    if (!error) setAviso("Enviamos um novo link de confirmação. Confira também a caixa de spam.");
   }
 
   const campo =
@@ -121,7 +140,45 @@ export function FormLogin() {
           </label>
         )}
 
-        {erro && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{erro}</p>}
+        {modo === "entrar" && (
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <label className="flex cursor-pointer select-none items-center gap-2 text-slate-700">
+              <input
+                type="checkbox"
+                checked={manter}
+                onChange={(e) => setManter(e.target.checked)}
+                className="size-4 rounded border-slate-300 accent-brand-blue"
+              />
+              Mantenha-me conectado
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setErro(null);
+                setModo("recuperar");
+              }}
+              className="font-medium text-brand-blue hover:underline"
+            >
+              Esqueci a minha senha
+            </button>
+          </div>
+        )}
+
+        {erro && (
+          <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">
+            {erro}
+            {naoConfirmado && (
+              <button
+                type="button"
+                onClick={reenviarConfirmacao}
+                disabled={carregando}
+                className="mt-1 block font-semibold underline hover:no-underline"
+              >
+                Reenviar e-mail de confirmação
+              </button>
+            )}
+          </div>
+        )}
         {aviso && <p role="status" className="rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800 ring-1 ring-teal-200">{aviso}</p>}
 
         <button
@@ -140,14 +197,9 @@ export function FormLogin() {
           </button>
         )}
         {modo === "entrar" && (
-          <>
-            <button type="button" onClick={() => setModo("cadastrar")} className="text-left text-brand-blue hover:underline">
-              Primeiro acesso? Criar cadastro
-            </button>
-            <button type="button" onClick={() => setModo("recuperar")} className="text-left text-slate-500 hover:underline">
-              Esqueci minha senha
-            </button>
-          </>
+          <button type="button" onClick={() => setModo("cadastrar")} className="text-left text-brand-blue hover:underline">
+            Primeiro acesso? Criar cadastro
+          </button>
         )}
       </div>
     </div>
