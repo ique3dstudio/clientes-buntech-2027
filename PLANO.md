@@ -177,7 +177,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 ## Status
 | Fase | Situação |
 |---|---|
-| 0 — Fundação | ✅ Concluída (app Next.js, banco Supabase com RLS, login, perfis, CI, deploy) |
+| 0 — Fundação | ✅ Código e banco prontos (app Next.js, Supabase com RLS, login, perfis, CI). ⏳ Deploy na Vercel aguardando instalar a integração GitHub da Vercel no repositório |
 | 1 — Mapa + Clientes | ⏳ Próxima |
 
 ---
