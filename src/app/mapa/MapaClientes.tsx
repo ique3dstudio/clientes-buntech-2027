@@ -2,7 +2,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Map as MapaGL, GeoJSONSource } from "maplibre-gl";
+import type { Map as MapaGL, GeoJSONSource, StyleSpecification } from "maplibre-gl";
 import { createClient } from "@/lib/supabase/client";
 import { normalizar } from "@/lib/texto";
 import {
@@ -10,6 +10,34 @@ import {
 } from "@/lib/clientes";
 
 const ESTILO = "https://tiles.openfreemap.org/styles/positron";
+
+/** Plano B: mapa raster do OpenStreetMap, caso o estilo vetorial não carregue. */
+const ESTILO_RESERVA: StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: "raster",
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: "© Colaboradores do OpenStreetMap",
+    },
+  },
+  layers: [{ id: "osm", type: "raster", source: "osm" }],
+};
+
+/** Usa o estilo vetorial se ele responder em até 6 s; senão, o plano B. */
+async function escolherEstilo(): Promise<string | StyleSpecification> {
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch(ESTILO, { signal: ctl.signal });
+    clearTimeout(t);
+    return r.ok ? ESTILO : ESTILO_RESERVA;
+  } catch {
+    return ESTILO_RESERVA;
+  }
+}
 const BRASIL: [number, number, number, number] = [-74, -34, -34, 5.5];
 
 type Ficha = {
@@ -25,6 +53,7 @@ export function MapaClientes() {
   const [pronto, setPronto] = useState(false);
   const [clientes, setClientes] = useState<ClienteMapa[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [avisoMapa, setAvisoMapa] = useState<string | null>(null);
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [frentes, setFrentes] = useState<Record<string, boolean>>({ pastagens: true, "grandes-culturas": true, nenhuma: true });
@@ -70,20 +99,28 @@ export function MapaClientes() {
     let instancia: MapaGL | null = null;
     (async () => {
       const ml = await import("maplibre-gl");
+      const estilo = await escolherEstilo();
       if (cancelado || !container.current) return;
-      const m = new ml.Map({ container: container.current, style: ESTILO, bounds: BRASIL, fitBoundsOptions: { padding: 30 }, attributionControl: { compact: true } });
+      if (estilo !== ESTILO) setAvisoMapa("Mapa base reserva (OpenStreetMap) em uso.");
+      const m = new ml.Map({ container: container.current, style: estilo, bounds: BRASIL, fitBoundsOptions: { padding: 30 }, attributionControl: { compact: true } });
       instancia = m;
       mapa.current = m;
       m.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
       m.addControl(new ml.GeolocateControl({ trackUserLocation: false }), "bottom-right");
+      m.on("error", (e) => {
+        const msg = e.error?.message ?? "erro desconhecido";
+        if (!/(AJAXError|Failed to fetch|NetworkError|Load failed)/i.test(msg)) setAvisoMapa(`Mapa: ${msg}`);
+      });
       m.on("load", () => {
         m.addSource("clientes", { type: "geojson", data: { type: "FeatureCollection", features: [] }, cluster: true, clusterRadius: 45, clusterMaxZoom: 11 });
         m.addLayer({ id: "grupos", type: "circle", source: "clientes", filter: ["has", "point_count"], paint: {
           "circle-color": "#0891d1", "circle-opacity": 0.85, "circle-stroke-width": 3, "circle-stroke-color": "#ffffff",
           "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 30, 26],
         } });
-        m.addLayer({ id: "grupos-n", type: "symbol", source: "clientes", filter: ["has", "point_count"],
-          layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 13, "text-font": ["Noto Sans Bold"] }, paint: { "text-color": "#fff" } });
+        if (m.getStyle().glyphs) {
+          m.addLayer({ id: "grupos-n", type: "symbol", source: "clientes", filter: ["has", "point_count"],
+            layout: { "text-field": ["get", "point_count_abbreviated"], "text-size": 13, "text-font": ["Noto Sans Bold"] }, paint: { "text-color": "#fff" } });
+        }
         m.addLayer({ id: "pontos", type: "circle", source: "clientes", filter: ["!", ["has", "point_count"]], paint: {
           "circle-color": ["get", "cor"], "circle-radius": ["case", ["==", ["get", "precisao"], "exata"], 8, 6],
           "circle-stroke-width": 3, "circle-stroke-color": ["get", "borda"],
@@ -179,6 +216,10 @@ export function MapaClientes() {
             {visiveis.length} no mapa{semLocal > 0 && <> · {semLocal} sem localização</>}
           </p>
           {erro && <p className="mt-1 text-xs text-red-600">{erro}</p>}
+          {avisoMapa && <p className="mt-1 text-xs text-amber-600">{avisoMapa}</p>}
+          {clientes.length === 0 && !erro && (
+            <p className="mt-2 text-xs text-slate-500">Nenhum cliente cadastrado ainda. Use <a className="text-brand-blue underline" href="/admin/importar">Importar</a> para carregar a planilha.</p>
+          )}
         </div>
       </div>
 
