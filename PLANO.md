@@ -177,7 +177,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 ## Status
 | Fase | Situação |
 |---|---|
-| 0 — Fundação | ✅ Código e banco prontos (app Next.js, Supabase com RLS, login, perfis, CI). ⏳ Deploy na Vercel aguardando instalar a integração GitHub da Vercel no repositório |
+| 0 — Fundação | ✅ Concluída — no ar em https://clientes-buntech-2027.vercel.app (app Next.js, Supabase com RLS, login, perfis, CI) |
 | 1 — Mapa + Clientes | ⏳ Próxima |
 
 ---
