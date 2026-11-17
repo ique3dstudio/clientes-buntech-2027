@@ -25,6 +25,18 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 | **Pastagens / Forrageiras** | Pó de revestimento | Sementeiras de pastagens | Verde |
 | **Grandes Culturas** | Pó secante e polímero | Sementeiras de soja / milho | Âmbar/Laranja |
 
+**Produtos por frente (definido pelo usuário):**
+| Produto | Pastagens | Grandes Culturas |
+|---|:-:|:-:|
+| SEEDGEL | ✔ | |
+| SEEDGRAF | ✔ | |
+| GRAFITE EM PÓ | ✔ | |
+| SEEDFLOW | ✔ | ✔ |
+| Polímero | | ✔ |
+| SEEDCOLOR | *a confirmar* | *a confirmar* |
+
+- A frente de um cliente atual é **sugerida automaticamente pelos produtos que ele já comprou** (um produto de cada frente → cliente nas duas). Prospects recebem a frente no cadastro.
+
 - Um cliente pertence a uma frente, mas **pode atuar nas duas** (sementeira mista) → campo multi-seleção, marcador com ícone duplo.
 - Estrutura preparada para adicionar uma 3ª frente no futuro sem refazer o sistema (frentes são cadastro, não código fixo).
 
@@ -44,8 +56,9 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 - Camada opcional de contexto agrícola: divisão por UF/município (IBGE).
 
 ### 3.2 Territórios
-- Território = **polígono desenhado à mão** no mapa pelo admin (vértices editáveis, vários polígonos por vendedor, com encaixe opcional nas divisas de UF/município do IBGE para não sobrar fresta). A base IBGE fica como camada de referência.
-- Editor visual (admin): desenhar, editar vértices, dividir/unir, atribuir vendedor.
+- Território = **união de áreas oficiais do IBGE**: estados inteiros e, onde o território pega só parte de um estado, **mesorregiões/municípios**. O contorno é calculado (unificação das áreas) e desenhado com **linha tracejada na cor do vendedor**, seguindo exatamente as divisas reais. Ver divisão definida na seção 11.
+- Vantagem: o cliente cai em um território sem ambiguidade (pelo município), sem frestas nem sobreposição.
+- Editor visual (admin): clicar em estados/mesorregiões/municípios no mapa para mover de um território para outro; polígono desenhado à mão só como exceção.
 - Detecção de **sobreposição e buracos** (áreas sem dono) com alerta.
 - Histórico de alterações de território (quem mudou, quando) — importante para comissão/auditoria.
 - Cliente é atribuído automaticamente ao vendedor do território onde cai (com possibilidade de exceção manual).
@@ -165,13 +178,14 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 
 | # | Tema | Decisão |
 |---|---|---|
-| 1 | Territórios | **Desenhados à mão** (polígonos livres), não por estado/município. O editor de desenho passa a ser prioridade da Fase 2; a base IBGE vira só camada de referência opcional. |
-| 2 | Vendedores | **5 vendedores**, cada um com cor própria no tracejado. |
+| 1 | Territórios | **Seguir o formato exato dos estados**; nos territórios que pegam parte de estados (vermelho, laranja, roxo), dividir por mesorregião/município do IBGE. Divisão na seção 11. |
+| 2 | Vendedores | **5 territórios**: Edson Diniz (externo), Gustavo Ique, João Rafael, Larissa Machado e 1 território ainda sem vendedor. Ver seção 11. |
 | 3 | Dados existentes | Planilha recebida (87 clientes, 5 abas) — análise na seção 10. A importação dela entra já na **Fase 1** para o mapa nascer com dados reais. |
 | 4 | Usuários | Equipe interna + **1 representante externo** (perfil "Externo": vê/edita só o próprio território, sem exportar). |
 | 5 | Marca | Logo recebido em `public/brand/logo-buntech-agro.png`. Paleta: azul `#0891D1` e verde-água `#17A89A`. **Logo grande** na tela de login e na tela inicial/cabeçalho do mapa, além de ícone do app (PWA). |
 | 6 | Infra | Começar nos planos gratuitos (Vercel + Supabase). |
 | 7 | Offline | Fora do início; fica na Fase 6. Ver lembrete abaixo. |
+| 8 | 2º Cadastro | São **outros cadastros no TOTVS (outro CNPJ)** do mesmo cliente → um cliente pode ter várias unidades/códigos TOTVS. Integração futura com o **TOTVS** (ERP) para puxar pedidos automaticamente. |
 
 ### Ainda em aberto
 - Confirmar se existe sementeira que compra as duas frentes (o plano assume que sim).
@@ -230,8 +244,44 @@ Linhas: **SEEDGEL** (FR, FR M, FR GRAF — saco 25 kg / big bag 1000 kg), **SEED
 
 ### 10.6 O que a planilha revela para o mapa
 - Base atual concentrada em **MG e SP** e quase toda em **pastagens** — a frente Grandes Culturas praticamente ainda não existe na carteira → o app deve facilitar a **carga em massa de prospects de soja/milho**.
-- A coluna **Região** da planilha **não é usada**: os territórios deste app serão definidos do zero, desenhados à mão.
+- A coluna **Região** da planilha **não é usada**: os territórios deste app são os da seção 11.
 - Mapa poderá colorir por **status** (Carteira × Perdido), **etapa do funil** e destacar **"sem comprar há X meses"** (risco de churn) e **alerta financeiro**.
+
+## 11. Territórios e vendedores
+
+Cor da linha tracejada = cor do território no mapa enviado pelo usuário.
+
+| Território | Cor | Vendedor | Área |
+|---|---|---|---|
+| **Centro-Oeste** | Rosa | **Edson Diniz** (representante externo) | **MT + MS** inteiros |
+| **GO/BA** | Verde | **Larissa Machado** | **GO + BA** inteiros (+ DF — *a confirmar*) |
+| **MG/SP Leste** | Vermelho | **Gustavo Ique** | **MG** inteiro + **parte de SP** |
+| **SP/PR Norte** | Laranja | **João Rafael** | **parte de SP** + **parte do PR** |
+| **Sul** | Roxo | *Sem vendedor (vago)* | **parte do PR** + **SC + RS** inteiros |
+
+Fora dos 5 territórios (Norte, Nordeste exceto BA, TO, ES, RJ) = **área livre**: aparece no mapa sem dono e os clientes lá ficam com a gestão até ser atribuída.
+
+### 11.1 Proposta de divisão dos estados partidos (por mesorregião IBGE) — *a confirmar*
+Leitura do mapa ilustrativo:
+
+**São Paulo**
+- Vermelho (Gustavo): São José do Rio Preto, Ribeirão Preto (Franca), Vale do Paraíba Paulista (S. J. dos Campos, Taubaté).
+- Laranja (João Rafael): Araçatuba, Presidente Prudente, Marília, Assis, Bauru, Araraquara, Piracicaba, Campinas, Itapetininga, Macro Metropolitana, Metropolitana de São Paulo, Litoral Sul.
+
+**Paraná**
+- Laranja (João Rafael): Noroeste (Paranavaí), Centro Ocidental (Campo Mourão), Norte Central (Londrina, Maringá), Norte Pioneiro, Centro Oriental (Ponta Grossa), Metropolitana de Curitiba.
+- Roxo (vago): Oeste (Cascavel, Foz do Iguaçu), Sudoeste, Centro-Sul (Guarapuava), Sudeste.
+
+Depois de pronto, qualquer município pode ser movido de território pelo editor (com histórico).
+
+### 11.2 Território vago
+- O território Roxo nasce **sem vendedor**: clientes ficam visíveis para gestão/admin e podem ser atribuídos a um vendedor provisório.
+- Quando houver contratação, basta vincular o vendedor ao território.
+
+### 11.3 Nota técnica
+- As malhas oficiais (estados, mesorregiões, municípios) vêm do IBGE. O endereço do IBGE está bloqueado na rede deste ambiente de desenvolvimento; as malhas serão obtidas por pacote npm ou liberando o endereço do IBGE no ambiente, na Fase 2.
+
+---
 
 ## 9. Lembretes para cobrar do usuário
 - **MODO OFFLINE (Fase 6):** o usuário pediu para ser cobrado, mais adiante, de implementar o modo offline (cache dos clientes do território + fila de registros sincronizada). Cobrar ao concluir a Fase 3 ou 4, antes do go-live.
