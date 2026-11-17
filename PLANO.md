@@ -267,10 +267,10 @@ Fora dos 5 territórios (Norte, Nordeste exceto BA, TO, ES, RJ) = **área livre*
 - Vermelho (Gustavo): São José do Rio Preto, Ribeirão Preto (Franca), **Campinas**, Vale do Paraíba Paulista (S. J. dos Campos, Taubaté).
 - Laranja (João Rafael): Araçatuba, Presidente Prudente, Marília, Assis, Bauru, Araraquara, Piracicaba, Itapetininga, Macro Metropolitana, Metropolitana de São Paulo, Litoral Sul.
 
-**Paraná**
-- Laranja (João Rafael): Noroeste (Paranavaí), Centro Ocidental (Campo Mourão), Norte Central **exceto a microrregião de Maringá** (Londrina, Apucarana…), Norte Pioneiro, Centro Oriental (Ponta Grossa), Metropolitana de Curitiba.
-- Roxo (vago): **microrregião de Maringá**, Oeste (Cascavel, Foz do Iguaçu), Sudoeste, Centro-Sul (Guarapuava), Sudeste.
-- ⚠️ A microrregião de Maringá provavelmente **não encosta** no resto do Roxo (fica cercada por áreas do Laranja) → vira uma "ilha" roxa. O sistema suporta território em várias partes; validar visualmente na Fase 2 se fica assim ou se Campo Mourão também passa para o Roxo para ligar as áreas.
+**Paraná** — linha diagonal (transversal) partindo de Maringá: **de Maringá para baixo = Roxo**, sem ilhas.
+- Laranja (João Rafael): Noroeste (Paranavaí), Norte Central **exceto Maringá** (Londrina, Apucarana, Arapongas…), Norte Pioneiro, Centro Oriental (Ponta Grossa), Metropolitana de Curitiba.
+- Roxo (vago): **Maringá e região**, Centro Ocidental (Campo Mourão, Goioerê), Oeste (Cascavel, Foz do Iguaçu), Sudoeste, Centro-Sul (Guarapuava), Sudeste.
+- Regra: o Roxo precisa ser **uma área contínua**. Na Fase 2 a divisa será ajustada **município a município** ao longo dessa diagonal para ligar Maringá ao resto do Roxo, e o resultado é validado no mapa antes de valer.
 
 Depois de pronto, qualquer município pode ser movido de território pelo editor (com histórico).
 
