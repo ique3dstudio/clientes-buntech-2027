@@ -61,7 +61,7 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 - Preenchimento automático via CNPJ (razão social, endereço, CNAE, situação cadastral) usando API pública (BrasilAPI).
 
 ### 3.4 Prospecção e funil
-- Funil configurável: *Prospect → Contato feito → Reunião/Visita → Amostra/Teste → Proposta → Cliente ativo* (+ Perdido com motivo).
+- Funil configurável, iniciando com o funil real da Buntech (ver 10.4): *Lead Frio → Lead → Qualificado → Validação Industrial/Mercado → Fechado/Ganha → Recorrente* (+ Perdido com motivo).
 - **Registro de interações**: ligação, WhatsApp, e-mail, visita (com check-in por GPS), amostra enviada.
 - **Tarefas e lembretes** (retornar em X dias), com agenda do dia por vendedor.
 - Linha do tempo por cliente.
@@ -167,7 +167,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 |---|---|---|
 | 1 | Territórios | **Desenhados à mão** (polígonos livres), não por estado/município. O editor de desenho passa a ser prioridade da Fase 2; a base IBGE vira só camada de referência opcional. |
 | 2 | Vendedores | **5 vendedores**, cada um com cor própria no tracejado. |
-| 3 | Dados existentes | Já existe planilha de clientes → importação (Fase 4) será desenhada sobre as colunas reais dela. **Preciso receber a planilha.** |
+| 3 | Dados existentes | Planilha recebida (87 clientes, 5 abas) — análise na seção 10. A importação dela entra já na **Fase 1** para o mapa nascer com dados reais. |
 | 4 | Usuários | Equipe interna + **1 representante externo** (perfil "Externo": vê/edita só o próprio território, sem exportar). |
 | 5 | Marca | Logo recebido em `public/brand/logo-buntech-agro.png`. Paleta: azul `#0891D1` e verde-água `#17A89A`. **Logo grande** na tela de login e na tela inicial/cabeçalho do mapa, além de ícone do app (PWA). |
 | 6 | Infra | Começar nos planos gratuitos (Vercel + Supabase). |
@@ -180,6 +180,58 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 
 ---
 
+## 10. Análise da planilha atual (`carteira-buntech-2026-11-17.xlsx`)
+
+> A planilha **não é versionada no repositório** (contém telefones e e-mails de pessoas — LGPD). Fica fora do Git (`.gitignore`) e será importada direto no banco.
+
+### 10.1 O que existe hoje
+| Aba | Linhas | Conteúdo | Vira no app |
+|---|---|---|---|
+| **Clientes** | 87 (60 Carteira, 27 Perdidos) | 35 colunas: cadastro, funil, comercial, último pedido | `clientes` |
+| **2º Cadastro** | 6 | Outros códigos/CNPJs do mesmo cliente (ex.: Agro Tonaco tem 2 CNPJs) | `cliente_unidades` (várias unidades/CNPJs por cliente, uma "principal") |
+| **Contatos** | 71 | Cliente, responsável, telefone | `contatos` |
+| **Histórico de vendas** | 47 | Qtd e faturamento por produto, 2023 → 2026 | `vendas_anuais` |
+| **Pedidos** | 31 | Data, produto, qtd (TN), valor, tipo | `pedidos` |
+
+### 10.2 Qualidade dos dados (o que a importação precisa tratar)
+- **Coordenadas**: 66 de 87 têm lat/long → **21 sem localização** (geocodificar pelo endereço/cidade ou CNPJ; o que falhar vai para uma fila "posicionar no mapa").
+- **CNPJ/CPF**: 58 preenchidos (55 CNPJ, **3 CPF** — produtor pessoa física) → o campo aceita os dois, validado; 29 sem documento.
+- **Cidade** em formatos misturados ("Uberaba", "Corinto - Mg", "Buritis - MG") → separar em `cidade` + `UF` padronizados (código IBGE).
+- **Valores como texto** ("R$ 13.500,00", "18 TN") → converter para número + unidade.
+- **Condição de pagamento** com variações ("528 - 30/60 - DDL" × "528 - 30/60 DDL") → tabela padronizada.
+- **Contatos** concatenados num campo só ("João - 38 9812-7969 | 38 3751…") → a aba Contatos já é a fonte estruturada.
+- Colunas **vazias hoje** (Faturamento, Data último contato) → no app passam a ser **calculadas** (dos pedidos e das interações), não digitadas.
+- Colunas **derivadas** (Meses sem comprar, Última compra, Último produto/qtd/valor, Ritmo) → calculadas automaticamente a partir de `pedidos`.
+
+### 10.3 Mapeamento de campos → app
+| Planilha | App | Observação |
+|---|---|---|
+| Cliente | nome fantasia | obrigatório |
+| Razão social / CNPJ/CPF / Código / Loja | unidade (razão, documento, código ERP, loja) | código = cliente no ERP |
+| Endereço, Cidade, Latitude, Longitude | endereço, cidade, UF, ponto no mapa | |
+| Região | **região comercial** | 6 regiões: São Paulo, Chapada Gaúcha, Montes Claros, Triângulo Mineiro, Gov. Valadares, Sul de Minas |
+| Situação (Carteira/Perdidos) + Motivo | status + motivo de perda | motivos viram lista padronizada |
+| Funil | etapa do funil | ver 10.4 |
+| Porte, Equipamento, Segmento | perfil (porte, equipamento: Betoneira/Coater + quantidade) | |
+| Ritmo (ton/mês), Potencial (ton/ano) | potencial | base para priorizar prospecção |
+| Visitado | calculado (existe visita registrada) | |
+| Produto principal / Último produto | calculado dos pedidos | |
+| Alerta financeiro, Condição de pagamento | aba "Financeiro" do cliente | alerta aparece como selo no mapa |
+| Observações ("CRM do Alexandre: …") | 1ª interação da linha do tempo, autor = vendedor citado | |
+| E-mail, Site, Contatos | contatos / site | |
+| Cadastrado em | data de cadastro | |
+
+### 10.4 Funil real (substitui o funil genérico da seção 3.4)
+**Lead Frio → Lead → Qualificado → Validação Industrial/Mercado → Fechado/Ganha → Recorrente**, + **Perdido** (com motivo).
+- Motivos de perda atuais: *Não incrusta sementes* (19), *Não trabalha com sementes de pastagens* (5), *Já foi cliente, parou de incrustar* (2), *Incrusta sementes em SP* (1).
+
+### 10.5 Produtos (catálogo inicial)
+Linhas: **SEEDGEL** (FR, FR M, FR GRAF — saco 25 kg / big bag 1000 kg), **SEEDCOLOR** (amarelo, azul, laranja, preto, verde, vermelho, vermelho plus — caixa 25 kg), **SEEDGRAF** (caixa 20 kg / big bag 500 kg), **GRAFITE EM PÓ** (saco 20 kg / big bag 1000 kg), **SEEDFLOW** (verde, caixa 15 kg). Unidade de venda: toneladas.
+
+### 10.6 O que a planilha revela para o mapa
+- Base atual concentrada em **MG e SP** e quase toda em **pastagens** — a frente Grandes Culturas praticamente ainda não existe na carteira → o app deve facilitar a **carga em massa de prospects de soja/milho**.
+- A coluna **Região** já é uma divisão comercial → ponto de partida para desenhar os territórios dos 5 vendedores.
+- Mapa poderá colorir por **status** (Carteira × Perdido), **etapa do funil** e destacar **"sem comprar há X meses"** (risco de churn) e **alerta financeiro**.
+
 ## 9. Lembretes para cobrar do usuário
 - **MODO OFFLINE (Fase 6):** o usuário pediu para ser cobrado, mais adiante, de implementar o modo offline (cache dos clientes do território + fila de registros sincronizada). Cobrar ao concluir a Fase 3 ou 4, antes do go-live.
-- Enviar a planilha de clientes atual (para a Fase 4, mas ajuda a definir os campos já na Fase 1).

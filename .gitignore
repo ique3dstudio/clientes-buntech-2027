@@ -1,0 +1,6 @@
+# Dados sensíveis de clientes (LGPD) — não versionar
+*.xlsx
+*.xls
+*.csv
+.env*
+node_modules/
