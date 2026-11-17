@@ -65,6 +65,8 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 - Resumo por território: nº de clientes, prospects, % cobertura, faturamento potencial.
 
 ### 3.3 Cadastro de clientes (campos iniciais; o resto incluímos depois)
+
+> **Regra de localização (definida pelo usuário):** a Buntech atende **tratamento de sementes (produção/indústria)**. O ponto no mapa é sempre a **unidade de produção/tratamento/beneficiamento**, onde a empresa reveste/trata as sementes. **Nunca** usar localização de revenda, loja, escritório ou filial comercial. Se o cliente tiver mais de uma unidade de produção, cada uma vira um ponto (a unidade principal define o território e o vendedor). O formulário de cadastro e a importação devem lembrar essa regra.
 - Identificação: razão social, nome fantasia, **CNPJ** (validado, único), inscrição estadual, **site**.
 - Local: endereço, **cidade, UF**, CEP, **coordenadas** (geocodificação automática + ajuste arrastando o pino).
 - Comercial: frente(s), status, estágio do funil, vendedor responsável, origem do lead.

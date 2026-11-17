@@ -50,6 +50,16 @@ describe("montarImportacao", () => {
   });
 });
 
+describe("cidade informada manualmente", () => {
+  it("Sementes Bravante fica em Monte Santo de Minas", () => {
+    const r = montarImportacao({ Clientes: [{ Cliente: "Sementes Bravante", Situação: "Perdidos" }] }, idx, novoId, "2026-11-17");
+    expect(r.clientes[0].cidade).toBe("Monte Santo de Minas");
+    expect(r.clientes[0].uf).toBe("MG");
+    expect(r.clientes[0].localizacao_precisao).toBe("cidade");
+    expect(r.relatorio.semLocalizacao).toEqual([]);
+  });
+});
+
 describe("nomes alternativos", () => {
   it("junta LPC Sementes ao cliente Da Terra (histórico de vendas)", () => {
     const r = montarImportacao(

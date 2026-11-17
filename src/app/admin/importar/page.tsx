@@ -25,6 +25,10 @@ async function Conteudo() {
         <p className="mt-1 text-sm text-slate-500">
           Envie a planilha da carteira (.xlsx). O arquivo é lido no seu navegador e nada é gravado até você confirmar.
         </p>
+        <p className="mt-4 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-900 ring-1 ring-sky-200">
+          <strong>Lembrete:</strong> o ponto no mapa deve ser sempre a <strong>unidade de produção/tratamento de sementes</strong> do
+          cliente, nunca a revenda, loja ou filial comercial. Confira os endereços da planilha antes de gravar.
+        </p>
         <ImportarPlanilha />
       </main>
     </>

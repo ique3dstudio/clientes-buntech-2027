@@ -80,6 +80,11 @@ const ALIAS: Record<string, string> = {
   "lpc sementes": "da terra", // LPC Sementes é a mesma empresa que Da Terra
 };
 
+/** Cidade informada pelo usuário para clientes que vêm sem cidade/endereço na planilha */
+const CIDADE_MANUAL: Record<string, [string, string]> = {
+  "sementes bravante": ["Monte Santo de Minas", "MG"],
+};
+
 export function txt(v: unknown): string | null {
   if (v == null) return null;
   if (v instanceof Date) return v.toISOString().slice(0, 10);
@@ -147,6 +152,7 @@ export function montarImportacao(abas: Abas, idx: IndiceMunicipios, novoId: () =
     if (lat == null || lng == null) lat = lng = null;
     let [cidade, uf] = separarCidade(r["Cidade"]);
     if (!cidade) [cidade, uf] = cidadeDoEndereco(r["Endereço"], idx) as [string, string | null];
+    if (!cidade && CIDADE_MANUAL[normalizar(nome)]) [cidade, uf] = CIDADE_MANUAL[normalizar(nome)];
     let mun = cidade ? idx.achar(cidade, uf, lat, lng) : null;
     if (!mun && lat != null && lng != null) mun = idx.maisProximo(lat, lng);
     let precisao: "exata" | "cidade" = "exata";
