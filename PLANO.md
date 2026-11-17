@@ -209,7 +209,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 | Cliente | nome fantasia | obrigatório |
 | Razão social / CNPJ/CPF / Código / Loja | unidade (razão, documento, código ERP, loja) | código = cliente no ERP |
 | Endereço, Cidade, Latitude, Longitude | endereço, cidade, UF, ponto no mapa | |
-| Região | **região comercial** | 6 regiões: São Paulo, Chapada Gaúcha, Montes Claros, Triângulo Mineiro, Gov. Valadares, Sul de Minas |
+| Região | **ignorada** | Divisão de outro app do usuário; não é importada. As regiões deste app são os territórios desenhados à mão (3.2), e o cliente recebe território/vendedor automaticamente pela localização no mapa. |
 | Situação (Carteira/Perdidos) + Motivo | status + motivo de perda | motivos viram lista padronizada |
 | Funil | etapa do funil | ver 10.4 |
 | Porte, Equipamento, Segmento | perfil (porte, equipamento: Betoneira/Coater + quantidade) | |
@@ -230,7 +230,7 @@ Linhas: **SEEDGEL** (FR, FR M, FR GRAF — saco 25 kg / big bag 1000 kg), **SEED
 
 ### 10.6 O que a planilha revela para o mapa
 - Base atual concentrada em **MG e SP** e quase toda em **pastagens** — a frente Grandes Culturas praticamente ainda não existe na carteira → o app deve facilitar a **carga em massa de prospects de soja/milho**.
-- A coluna **Região** já é uma divisão comercial → ponto de partida para desenhar os territórios dos 5 vendedores.
+- A coluna **Região** da planilha **não é usada**: os territórios deste app serão definidos do zero, desenhados à mão.
 - Mapa poderá colorir por **status** (Carteira × Perdido), **etapa do funil** e destacar **"sem comprar há X meses"** (risco de churn) e **alerta financeiro**.
 
 ## 9. Lembretes para cobrar do usuário
