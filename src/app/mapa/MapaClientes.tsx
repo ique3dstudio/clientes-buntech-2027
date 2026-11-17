@@ -99,6 +99,8 @@ export function MapaClientes() {
     let instancia: MapaGL | null = null;
     (async () => {
       const ml = await import("maplibre-gl");
+      // O worker é servido de /public (copiado no postinstall) — veja scripts/copiar-worker-mapa.mjs
+      ml.setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);
       const estilo = await escolherEstilo();
       if (cancelado || !container.current) return;
       if (estilo !== ESTILO) setAvisoMapa("Mapa base reserva (OpenStreetMap) em uso.");
