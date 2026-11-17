@@ -4,3 +4,11 @@
 *.csv
 .env*
 node_modules/
+/.next/
+/out/
+/coverage
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+!.env.example

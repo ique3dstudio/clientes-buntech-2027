@@ -174,6 +174,14 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 
 ---
 
+## Status
+| Fase | Situação |
+|---|---|
+| 0 — Fundação | ✅ Concluída (app Next.js, banco Supabase com RLS, login, perfis, CI, deploy) |
+| 1 — Mapa + Clientes | ⏳ Próxima |
+
+---
+
 ## 8. Decisões tomadas
 
 | # | Tema | Decisão |
