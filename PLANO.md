@@ -33,9 +33,9 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 | GRAFITE EM PÓ | ✔ | |
 | SEEDFLOW | ✔ | ✔ |
 | Polímero | | ✔ |
-| SEEDCOLOR | *a confirmar* | *a confirmar* |
+| SEEDCOLOR | ✔ | |
 
-- A frente de um cliente atual é **sugerida automaticamente pelos produtos que ele já comprou** (um produto de cada frente → cliente nas duas). Prospects recebem a frente no cadastro.
+- A frente de um cliente atual é **sugerida automaticamente pelos produtos que ele já comprou** (um produto exclusivo de cada frente → cliente nas duas). Cliente que só comprou **SEEDFLOW** (usado nas duas frentes) fica com a frente **a definir manualmente**. Prospects recebem a frente no cadastro.
 
 - Um cliente pertence a uma frente, mas **pode atuar nas duas** (sementeira mista) → campo multi-seleção, marcador com ícone duplo.
 - Estrutura preparada para adicionar uma 3ª frente no futuro sem refazer o sistema (frentes são cadastro, não código fixo).
@@ -188,7 +188,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 | 8 | 2º Cadastro | São **outros cadastros no TOTVS (outro CNPJ)** do mesmo cliente → um cliente pode ter várias unidades/códigos TOTVS. Integração futura com o **TOTVS** (ERP) para puxar pedidos automaticamente. |
 
 ### Ainda em aberto
-- Confirmar se existe sementeira que compra as duas frentes (o plano assume que sim).
+- Sementeira nas duas frentes: confirmado que existe.
 - Idioma: assumido 100% português (BR).
 - Integração futura com ERP/CRM (HubSpot, Apollo etc.).
 
@@ -254,23 +254,23 @@ Cor da linha tracejada = cor do território no mapa enviado pelo usuário.
 | Território | Cor | Vendedor | Área |
 |---|---|---|---|
 | **Centro-Oeste** | Rosa | **Edson Diniz** (representante externo) | **MT + MS** inteiros |
-| **GO/BA** | Verde | **Larissa Machado** | **GO + BA** inteiros (+ DF — *a confirmar*) |
+| **GO/BA** | Verde | **Larissa Machado** | **GO + DF + BA** inteiros |
 | **MG/SP Leste** | Vermelho | **Gustavo Ique** | **MG** inteiro + **parte de SP** |
 | **SP/PR Norte** | Laranja | **João Rafael** | **parte de SP** + **parte do PR** |
 | **Sul** | Roxo | *Sem vendedor (vago)* | **parte do PR** + **SC + RS** inteiros |
 
-Fora dos 5 territórios (Norte, Nordeste exceto BA, TO, ES, RJ) = **área livre**: aparece no mapa sem dono e os clientes lá ficam com a gestão até ser atribuída.
+Fora dos 5 territórios (Norte, Nordeste exceto BA, TO, ES, RJ) = **área livre** (confirmado, por enquanto): aparece no mapa sem dono e os clientes lá ficam com a gestão até ser atribuída.
 
-### 11.1 Proposta de divisão dos estados partidos (por mesorregião IBGE) — *a confirmar*
-Leitura do mapa ilustrativo:
+### 11.1 Divisão dos estados partidos (por mesorregião/microrregião IBGE) — confirmada
 
 **São Paulo**
-- Vermelho (Gustavo): São José do Rio Preto, Ribeirão Preto (Franca), Vale do Paraíba Paulista (S. J. dos Campos, Taubaté).
-- Laranja (João Rafael): Araçatuba, Presidente Prudente, Marília, Assis, Bauru, Araraquara, Piracicaba, Campinas, Itapetininga, Macro Metropolitana, Metropolitana de São Paulo, Litoral Sul.
+- Vermelho (Gustavo): São José do Rio Preto, Ribeirão Preto (Franca), **Campinas**, Vale do Paraíba Paulista (S. J. dos Campos, Taubaté).
+- Laranja (João Rafael): Araçatuba, Presidente Prudente, Marília, Assis, Bauru, Araraquara, Piracicaba, Itapetininga, Macro Metropolitana, Metropolitana de São Paulo, Litoral Sul.
 
 **Paraná**
-- Laranja (João Rafael): Noroeste (Paranavaí), Centro Ocidental (Campo Mourão), Norte Central (Londrina, Maringá), Norte Pioneiro, Centro Oriental (Ponta Grossa), Metropolitana de Curitiba.
-- Roxo (vago): Oeste (Cascavel, Foz do Iguaçu), Sudoeste, Centro-Sul (Guarapuava), Sudeste.
+- Laranja (João Rafael): Noroeste (Paranavaí), Centro Ocidental (Campo Mourão), Norte Central **exceto a microrregião de Maringá** (Londrina, Apucarana…), Norte Pioneiro, Centro Oriental (Ponta Grossa), Metropolitana de Curitiba.
+- Roxo (vago): **microrregião de Maringá**, Oeste (Cascavel, Foz do Iguaçu), Sudoeste, Centro-Sul (Guarapuava), Sudeste.
+- ⚠️ A microrregião de Maringá provavelmente **não encosta** no resto do Roxo (fica cercada por áreas do Laranja) → vira uma "ilha" roxa. O sistema suporta território em várias partes; validar visualmente na Fase 2 se fica assim ou se Campo Mourão também passa para o Roxo para ligar as áreas.
 
 Depois de pronto, qualquer município pode ser movido de território pelo editor (com histórico).
 
