@@ -17,14 +17,14 @@ export function SeletorPonto({ ponto, aoMudar, zoom = 12 }: { ponto: Ponto | nul
   const pino = useRef<Marker | null>(null);
   const ml = useRef<typeof import("maplibre-gl") | null>(null);
   const callback = useRef(aoMudar);
-  const inicial = useRef(ponto);
-  useEffect(() => { callback.current = aoMudar; });
+  const atual = useRef(ponto);
+  useEffect(() => { callback.current = aoMudar; atual.current = ponto; });
 
   useEffect(() => {
     let cancelado = false;
     (async () => {
       if (!container.current) return;
-      const ini = inicial.current;
+      const ini = atual.current;
       const { ml: lib, mapa: m } = await criarMapa(
         ini
           ? { container: container.current, center: [ini.lng, ini.lat], zoom, attributionControl: { compact: true } }

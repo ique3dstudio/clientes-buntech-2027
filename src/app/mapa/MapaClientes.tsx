@@ -21,7 +21,9 @@ type Ficha = {
 export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaGL | null>(null);
-  const [pronto, setPronto] = useState(false);
+  // O mapa "pronto" é guardado como objeto (não booleano): com Cache Components a página pode ser
+  // reexibida e o efeito recria o mapa — o estado antigo não pode valer para o mapa novo.
+  const [mapaPronto, setMapaPronto] = useState<MapaGL | null>(null);
   const [clientes, setClientes] = useState<ClienteMapa[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [avisoMapa, setAvisoMapa] = useState<string | null>(null);
@@ -112,16 +114,18 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
           m.on("mouseenter", l, () => (m.getCanvas().style.cursor = "pointer"));
           m.on("mouseleave", l, () => (m.getCanvas().style.cursor = ""));
         }
-        setPronto(true);
+        m.resize();
+        m.fitBounds(BRASIL, { padding: 30, animate: false });
+        setMapaPronto(m);
       });
     })();
-    return () => { cancelado = true; instancia?.remove(); mapa.current = null; };
+    return () => { cancelado = true; setMapaPronto(null); instancia?.remove(); mapa.current = null; };
   }, []);
 
   // 3) pontos no mapa
   useEffect(() => {
-    const m = mapa.current;
-    if (!pronto || !m) return;
+    const m = mapaPronto;
+    if (!m) return;
     const src = m.getSource("clientes") as GeoJSONSource | undefined;
     src?.setData({
       type: "FeatureCollection",
@@ -131,12 +135,12 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
         properties: { id: c.id, cor: corDaFrente(c.frentes), borda: COR_STATUS[c.status], precisao: c.localizacao_precisao },
       })),
     });
-  }, [pronto, visiveis]);
+  }, [mapaPronto, visiveis]);
 
   // 4) seleção + ficha
   useEffect(() => {
-    const m = mapa.current;
-    if (pronto && m) m.setFilter("pontos-sel", ["==", ["get", "id"], selecionadoId ?? ""]);
+    const m = mapaPronto;
+    if (m?.getLayer("pontos-sel")) m.setFilter("pontos-sel", ["==", ["get", "id"], selecionadoId ?? ""]);
     if (!selecionadoId) return;
     const c = clientes.find((x) => x.id === selecionadoId);
     if (c?.lat != null && c.lng != null && m) m.easeTo({ center: [c.lng, c.lat], zoom: Math.max(m.getZoom(), 9) });
@@ -150,7 +154,7 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
       if (vivo) setFicha({ id: selecionadoId, contatos: ct.data ?? [], pedidos: pd.data ?? [], cliente: cl.data });
     });
     return () => { vivo = false; };
-  }, [selecionadoId, pronto, clientes]);
+  }, [selecionadoId, mapaPronto, clientes]);
 
   const chip = (ativo: boolean, cor: string) =>
     `flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${ativo ? "bg-white text-slate-800 ring-slate-300" : "bg-slate-100 text-slate-400 ring-transparent"}` + (cor ? "" : "");
