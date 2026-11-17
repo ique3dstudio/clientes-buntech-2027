@@ -50,6 +50,21 @@ describe("montarImportacao", () => {
   });
 });
 
+describe("nomes alternativos", () => {
+  it("junta LPC Sementes ao cliente Da Terra (histórico de vendas)", () => {
+    const r = montarImportacao(
+      {
+        Clientes: [{ Cliente: "Da Terra", Situação: "Carteira", Cidade: "Governador Valadares - MG" }],
+        "Histórico de vendas": [{ Cliente: "LPC Sementes", Produto: "SEEDGEL FR BIGBAG 1000KG", "Qtd 2025": 464, "Faturamento 2025": 348000 }],
+      },
+      idx, novoId, "2026-11-17",
+    );
+    expect(r.clientes).toHaveLength(1);
+    expect(r.relatorio.criadosDoHistorico).toEqual([]);
+    expect(r.vendas[0].cliente_id).toBe(r.clientes[0].id);
+  });
+});
+
 // Teste com a planilha real, só se ela existir localmente (não é versionada — LGPD)
 const real = process.env.PLANILHA_TESTE;
 describe.skipIf(!real || !existsSync(real))("planilha real", () => {
@@ -58,7 +73,7 @@ describe.skipIf(!real || !existsSync(real))("planilha real", () => {
     const abas = await lerXlsx(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer);
     const r = montarImportacao(abas, idx, novoId, "2026-11-17");
     console.log(JSON.stringify({ ...r.relatorio, clientes: r.clientes.length, unidades: r.unidades.length, contatos: r.contatos.length, pedidos: r.pedidos.length, vendas: r.vendas.length }, null, 1));
-    expect(r.clientes.length).toBe(88);
+    expect(r.clientes.length).toBe(87);
     expect(r.relatorio.naoEncontrados).toEqual([]);
   });
 });

@@ -75,7 +75,10 @@ const ETAPA: Record<string, string> = {
 };
 const PORTE: Record<string, string> = { pequeno: "Pequeno", medio: "Médio", grande: "Grande" };
 /** Nomes alternativos usados em outras abas para o mesmo cliente */
-const ALIAS: Record<string, string> = { "maykel humberto": "ouro do cerrado sementes" };
+const ALIAS: Record<string, string> = {
+  "maykel humberto": "ouro do cerrado sementes",
+  "lpc sementes": "da terra", // LPC Sementes é a mesma empresa que Da Terra
+};
 
 export function txt(v: unknown): string | null {
   if (v == null) return null;
