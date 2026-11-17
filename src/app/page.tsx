@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { getUsuario } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -90,10 +91,16 @@ async function Inicio() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 p-8 text-center text-slate-500">
-          <p className="font-medium text-slate-700">Mapa interativo</p>
-          <p className="mt-1 text-sm">Chega na Fase 1, com os clientes da carteira atual importados.</p>
-        </section>
+        <Link
+          href="/mapa"
+          className="mt-8 flex items-center justify-between rounded-xl bg-gradient-to-r from-brand-blue to-brand-teal p-6 text-white shadow-sm transition hover:opacity-95"
+        >
+          <span>
+            <span className="block text-lg font-semibold">Abrir o mapa de clientes</span>
+            <span className="text-sm text-white/80">Clientes, prospects e filtros por frente e situação</span>
+          </span>
+          <span aria-hidden className="text-2xl">→</span>
+        </Link>
       </main>
     </>
   );

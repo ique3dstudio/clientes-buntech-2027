@@ -21,10 +21,18 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           <Link href="/" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
             Início
           </Link>
+          <Link href="/mapa" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+            Mapa
+          </Link>
           {usuario.papel === "admin" && (
-            <Link href="/admin/usuarios" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
-              Usuários
-            </Link>
+            <>
+              <Link href="/admin/importar" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+                Importar
+              </Link>
+              <Link href="/admin/usuarios" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+                Usuários
+              </Link>
+            </>
           )}
         </nav>
         <div className="ml-auto flex items-center gap-3">
