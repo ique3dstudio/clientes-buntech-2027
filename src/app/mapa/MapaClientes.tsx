@@ -2,43 +2,14 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Map as MapaGL, GeoJSONSource, StyleSpecification } from "maplibre-gl";
+import type { Map as MapaGL, GeoJSONSource } from "maplibre-gl";
+import Link from "next/link";
+import { BRASIL, criarMapa } from "@/lib/geo/maplibre";
 import { createClient } from "@/lib/supabase/client";
 import { normalizar } from "@/lib/texto";
 import {
   COR_FRENTE, COR_STATUS, ROTULO_STATUS, corDaFrente, mesesSemComprar, type ClienteMapa,
 } from "@/lib/clientes";
-
-const ESTILO = "https://tiles.openfreemap.org/styles/positron";
-
-/** Plano B: mapa raster do OpenStreetMap, caso o estilo vetorial não carregue. */
-const ESTILO_RESERVA: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: "© Colaboradores do OpenStreetMap",
-    },
-  },
-  layers: [{ id: "osm", type: "raster", source: "osm" }],
-};
-
-/** Usa o estilo vetorial se ele responder em até 6 s; senão, o plano B. */
-async function escolherEstilo(): Promise<string | StyleSpecification> {
-  try {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), 6000);
-    const r = await fetch(ESTILO, { signal: ctl.signal });
-    clearTimeout(t);
-    return r.ok ? ESTILO : ESTILO_RESERVA;
-  } catch {
-    return ESTILO_RESERVA;
-  }
-}
-const BRASIL: [number, number, number, number] = [-74, -34, -34, 5.5];
 
 type Ficha = {
   id: string;
@@ -47,7 +18,7 @@ type Ficha = {
   cliente: { email: string | null; site: string | null; endereco: string | null; observacoes: string | null; equipamento: string | null } | null;
 };
 
-export function MapaClientes() {
+export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaGL | null>(null);
   const [pronto, setPronto] = useState(false);
@@ -98,13 +69,12 @@ export function MapaClientes() {
     let cancelado = false;
     let instancia: MapaGL | null = null;
     (async () => {
-      const ml = await import("maplibre-gl");
-      // O worker é servido de /public (copiado no postinstall) — veja scripts/copiar-worker-mapa.mjs
-      ml.setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);
-      const estilo = await escolherEstilo();
-      if (cancelado || !container.current) return;
-      if (estilo !== ESTILO) setAvisoMapa("Mapa base reserva (OpenStreetMap) em uso.");
-      const m = new ml.Map({ container: container.current, style: estilo, bounds: BRASIL, fitBoundsOptions: { padding: 30 }, attributionControl: { compact: true } });
+      if (!container.current) return;
+      const { ml, mapa: m, reserva } = await criarMapa({
+        container: container.current, bounds: BRASIL, fitBoundsOptions: { padding: 30 }, attributionControl: { compact: true },
+      });
+      if (cancelado) { m.remove(); return; }
+      if (reserva) setAvisoMapa("Mapa base reserva (OpenStreetMap) em uso.");
       instancia = m;
       mapa.current = m;
       m.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
@@ -214,6 +184,11 @@ export function MapaClientes() {
               </label>
             ))}
           </div>
+          {podeEditar && (
+            <Link href="/clientes/novo" className="mt-3 block rounded-lg bg-brand-blue px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-blue-dark">
+              + Novo cliente
+            </Link>
+          )}
           <p className="mt-3 text-xs text-slate-500">
             {visiveis.length} no mapa{semLocal > 0 && <> · {semLocal} sem localização</>}
           </p>
@@ -241,6 +216,11 @@ export function MapaClientes() {
             </div>
             <button onClick={() => setSelecionadoId(null)} className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100" aria-label="Fechar">✕</button>
           </div>
+          {podeEditar && (
+            <Link href={`/clientes/${selecionado.id}/editar`} className="mt-3 inline-block rounded-lg px-3 py-1.5 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">
+              Editar cliente
+            </Link>
+          )}
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full px-2.5 py-1 font-medium text-white" style={{ background: COR_STATUS[selecionado.status] }}>{ROTULO_STATUS[selecionado.status]}</span>
             {selecionado.frentes.map((f) => (

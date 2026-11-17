@@ -22,7 +22,7 @@ async function Mapa() {
   return (
     <div className="flex h-screen flex-col">
       <Cabecalho usuario={usuario} />
-      <MapaClientes />
+      <MapaClientes podeEditar={usuario.papel !== "leitura"} />
     </div>
   );
 }

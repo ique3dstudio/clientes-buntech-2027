@@ -180,7 +180,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 | Fase | Situação |
 |---|---|
 | 0 — Fundação | ✅ Concluída — no ar em https://clientes-buntech-2027.vercel.app (app Next.js, Supabase com RLS, login, perfis, CI) |
-| 1 — Mapa + Clientes | 🚧 Em andamento: mapa com marcadores/filtros/busca/ficha e importação da planilha prontos; faltam cadastro/edição de cliente na tela e posicionar clientes sem localização |
+| 1 — Mapa + Clientes | 🚧 Quase pronta: mapa, filtros, ficha, importação (87 clientes carregados) e cadastro/edição de cliente com busca de CNPJ e ponto arrastável. Falta validar em uso e a ficha completa (histórico/vendas) |
 
 ---
 

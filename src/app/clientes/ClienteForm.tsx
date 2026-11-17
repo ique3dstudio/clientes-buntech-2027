@@ -1,0 +1,335 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { carregarMunicipios, UFS, type IndiceMunicipios, type Municipio } from "@/lib/geo/municipios";
+import { consultarCnpj, geocodificar, type ResultadoGeocodificacao } from "@/lib/geo/consultas";
+import { documentoValido, formatarDocumento, somenteDigitos } from "@/lib/documento";
+import { SeletorPonto, type Ponto } from "@/components/SeletorPonto";
+import type { Papel } from "@/lib/papeis";
+
+type Opcao = { id: number; nome: string };
+type Form = {
+  nome: string; razao_social: string; documento: string; site: string; email: string; telefone: string;
+  endereco: string; cep: string; cidade: string; uf: string; municipio_ibge: string;
+  status: "prospect" | "carteira" | "perdido"; etapa_id: string; motivo_perda_id: string; vendedor_id: string;
+  porte: string; equipamento: string; potencial_ton_ano: string; ritmo_ton_mes: string;
+  alerta_financeiro: string; condicao_pagamento: string; observacoes: string;
+};
+const VAZIO: Form = {
+  nome: "", razao_social: "", documento: "", site: "", email: "", telefone: "", endereco: "", cep: "", cidade: "", uf: "",
+  municipio_ibge: "", status: "prospect", etapa_id: "", motivo_perda_id: "", vendedor_id: "", porte: "", equipamento: "",
+  potencial_ton_ano: "", ritmo_ton_mes: "", alerta_financeiro: "", condicao_pagamento: "", observacoes: "",
+};
+
+const campo =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30";
+
+const nulo = (s: string) => (s.trim() === "" ? null : s.trim());
+const numero = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
+
+export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: string; papel: Papel; vendedorId: string | null }) {
+  const router = useRouter();
+  const gestao = papel === "admin" || papel === "gerente";
+  const [f, setF] = useState<Form>(VAZIO);
+  const [frentes, setFrentes] = useState<Set<string>>(new Set(["pastagens"]));
+  const [ponto, setPonto] = useState<Ponto | null>(null);
+  const [precisao, setPrecisao] = useState<"exata" | "cidade" | "manual">("exata");
+  const [vendedorOriginal, setVendedorOriginal] = useState("");
+  const [carregando, setCarregando] = useState(Boolean(clienteId));
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [etapas, setEtapas] = useState<Opcao[]>([]);
+  const [motivos, setMotivos] = useState<Opcao[]>([]);
+  const [listaFrentes, setListaFrentes] = useState<{ slug: string; nome: string }[]>([]);
+  const [vendedores, setVendedores] = useState<{ id: string; nome: string }[]>([]);
+  const [idx, setIdx] = useState<IndiceMunicipios | null>(null);
+  const [sugestoes, setSugestoes] = useState<Municipio[]>([]);
+  const [consultando, setConsultando] = useState(false);
+  const [achados, setAchados] = useState<ResultadoGeocodificacao[]>([]);
+
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
+
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const supabase = createClient();
+      const [e, m, fr, v, municipios] = await Promise.all([
+        supabase.from("funil_etapas").select("id, nome").order("ordem"),
+        supabase.from("motivos_perda").select("id, nome").eq("ativo", true).order("id"),
+        supabase.from("frentes").select("slug, nome").order("ordem"),
+        supabase.from("vendedores").select("id, nome").eq("ativo", true).order("nome"),
+        carregarMunicipios(),
+      ]);
+      if (!vivo) return;
+      setEtapas(e.data ?? []); setMotivos(m.data ?? []); setListaFrentes(fr.data ?? []); setVendedores(v.data ?? []); setIdx(municipios);
+      if (!clienteId) return;
+      const [c, mapa] = await Promise.all([
+        supabase.from("clientes").select("*").eq("id", clienteId).single(),
+        supabase.from("clientes_mapa").select("lat, lng, frentes").eq("id", clienteId).single(),
+      ]);
+      if (!vivo) return;
+      if (c.error || !c.data) { setErro("Cliente não encontrado ou sem permissão de acesso."); setCarregando(false); return; }
+      const d = c.data;
+      const s = (x: unknown) => (x == null ? "" : String(x));
+      setF({
+        nome: s(d.nome), razao_social: s(d.razao_social), documento: d.documento ? formatarDocumento(d.documento) : "",
+        site: s(d.site), email: s(d.email), telefone: s(d.telefone), endereco: s(d.endereco), cep: s(d.cep), cidade: s(d.cidade),
+        uf: s(d.uf).trim(), municipio_ibge: s(d.municipio_ibge), status: d.status, etapa_id: s(d.etapa_id), motivo_perda_id: s(d.motivo_perda_id),
+        vendedor_id: s(d.vendedor_id), porte: s(d.porte), equipamento: s(d.equipamento), potencial_ton_ano: s(d.potencial_ton_ano),
+        ritmo_ton_mes: s(d.ritmo_ton_mes), alerta_financeiro: s(d.alerta_financeiro), condicao_pagamento: s(d.condicao_pagamento),
+        observacoes: s(d.observacoes),
+      });
+      setVendedorOriginal(s(d.vendedor_id));
+      setPrecisao(d.localizacao_precisao);
+      if (mapa.data?.lat != null && mapa.data.lng != null) setPonto({ lat: mapa.data.lat, lng: mapa.data.lng });
+      setFrentes(new Set(mapa.data?.frentes ?? []));
+      setCarregando(false);
+    })();
+    return () => { vivo = false; };
+  }, [clienteId]);
+
+  const docDigitos = somenteDigitos(f.documento);
+  const docOk = docDigitos === "" || documentoValido(docDigitos);
+  const podeConsultarCnpj = docDigitos.length === 14 && documentoValido(docDigitos);
+
+  const sugestoesCidade = useMemo(() => (idx ? idx.buscar(f.cidade, 8).filter((m) => !f.uf || m.uf === f.uf) : []), [idx, f.cidade, f.uf]);
+
+  function escolherMunicipio(m: Municipio) {
+    setF((s) => ({ ...s, cidade: m.nome, uf: m.uf, municipio_ibge: m.ibge }));
+    setSugestoes([]);
+    if (!ponto) { setPonto({ lat: m.lat, lng: m.lng }); setPrecisao("cidade"); }
+  }
+
+  async function buscarCnpj() {
+    setConsultando(true); setErro(null); setAviso(null);
+    try {
+      const d = await consultarCnpj(docDigitos);
+      if (!d) { setAviso("CNPJ não encontrado na Receita Federal."); return; }
+      setF((s) => ({
+        ...s,
+        razao_social: s.razao_social || d.razao_social || "",
+        nome: s.nome || d.nome_fantasia || d.razao_social || "",
+        email: s.email || d.email?.toLowerCase() || "",
+        telefone: s.telefone || d.telefone || "",
+        cep: s.cep || d.cep || "",
+      }));
+      setAviso(
+        `Preenchido pela Receita${d.situacao ? ` (situação: ${d.situacao})` : ""}. O endereço da Receita é o da matriz (${d.cidade}/${d.uf}) — ` +
+          "informe aqui a unidade de produção, se for diferente.",
+      );
+    } catch (e) { setErro(e instanceof Error ? e.message : String(e)); }
+    finally { setConsultando(false); }
+  }
+
+  async function buscarEndereco() {
+    setConsultando(true); setErro(null); setAchados([]);
+    try {
+      const consulta = [f.endereco, f.cidade, f.uf, "Brasil"].filter(Boolean).join(", ");
+      const r = await geocodificar(consulta);
+      if (!r.length) setAviso("Endereço não encontrado. Tente só a cidade ou marque o ponto manualmente no mapa.");
+      else setAchados(r);
+    } catch (e) { setErro(e instanceof Error ? e.message : String(e)); }
+    finally { setConsultando(false); }
+  }
+
+  async function salvar(e: React.FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    if (!f.nome.trim()) return setErro("Informe o nome do cliente.");
+    if (!docOk) return setErro("CNPJ/CPF inválido.");
+    if (f.status === "perdido" && !f.motivo_perda_id) return setErro("Informe o motivo da perda.");
+    setSalvando(true);
+    const supabase = createClient();
+    const vendedorMudou = gestao && f.vendedor_id !== vendedorOriginal;
+    const base = {
+      nome: f.nome.trim(), razao_social: nulo(f.razao_social), documento: docDigitos || null, site: nulo(f.site), email: nulo(f.email),
+      telefone: nulo(f.telefone), endereco: nulo(f.endereco), cep: nulo(f.cep), cidade: nulo(f.cidade), uf: nulo(f.uf),
+      municipio_ibge: nulo(f.municipio_ibge), status: f.status, etapa_id: f.etapa_id ? Number(f.etapa_id) : null,
+      motivo_perda_id: f.status === "perdido" && f.motivo_perda_id ? Number(f.motivo_perda_id) : null,
+      porte: nulo(f.porte), equipamento: nulo(f.equipamento), potencial_ton_ano: numero(f.potencial_ton_ano),
+      ritmo_ton_mes: numero(f.ritmo_ton_mes), alerta_financeiro: nulo(f.alerta_financeiro),
+      condicao_pagamento: nulo(f.condicao_pagamento), observacoes: nulo(f.observacoes),
+      localizacao: ponto ? `SRID=4326;POINT(${ponto.lng} ${ponto.lat})` : null,
+      localizacao_precisao: precisao, localizacao_manual: precisao === "manual",
+      ...(gestao ? { vendedor_id: f.vendedor_id || null } : {}),
+      ...(vendedorMudou ? { vendedor_manual: Boolean(f.vendedor_id) } : {}),
+      // vendedor/externo cadastrando: o cliente já nasce no nome dele (senão ele não o enxergaria)
+      ...(!gestao && !clienteId ? { vendedor_id: vendedorId, vendedor_manual: true } : {}),
+    };
+    try {
+      let id = clienteId;
+      if (id) {
+        const { error } = await supabase.from("clientes").update(base).eq("id", id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("clientes").insert({ ...base, origem: "Cadastro manual" }).select("id").single();
+        if (error) throw error;
+        id = data.id as string;
+      }
+      // frentes: regrava as escolhidas como definidas à mão
+      const { data: fr } = await supabase.from("frentes").select("id, slug");
+      await supabase.from("cliente_frentes").delete().eq("cliente_id", id);
+      const linhas = (fr ?? []).filter((x) => frentes.has(x.slug)).map((x) => ({ cliente_id: id!, frente_id: x.id, manual: true }));
+      if (linhas.length) {
+        const { error } = await supabase.from("cliente_frentes").insert(linhas);
+        if (error) throw error;
+      }
+      router.push("/mapa");
+      router.refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : (err as { message?: string }).message ?? String(err);
+      setErro(/clientes_documento_uniq|duplicate key/i.test(msg) ? "Já existe um cliente com este CNPJ/CPF." : msg);
+      setSalvando(false);
+    }
+  }
+
+  if (carregando) return <p className="py-10 text-slate-500">Carregando…</p>;
+
+  const rotulo = (t: string, extra?: string) => (
+    <span className="mb-1 block text-sm font-medium text-slate-700">{t}{extra && <span className="ml-1 font-normal text-slate-400">{extra}</span>}</span>
+  );
+
+  return (
+    <form onSubmit={salvar} className="mt-6 space-y-8">
+      <Secao titulo="Identificação">
+        <label className="block sm:col-span-2">{rotulo("Nome do cliente *")}<input className={campo} value={f.nome} onChange={(e) => set("nome", e.target.value)} required /></label>
+        <div>
+          <label>{rotulo("CNPJ / CPF")}
+            <div className="flex gap-2">
+              <input className={`${campo} ${docOk ? "" : "border-red-400"}`} value={f.documento} inputMode="numeric"
+                onChange={(e) => set("documento", e.target.value)} onBlur={() => docDigitos && docOk && set("documento", formatarDocumento(docDigitos))} />
+              <button type="button" disabled={!podeConsultarCnpj || consultando} onClick={buscarCnpj}
+                className="shrink-0 rounded-lg px-3 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50 disabled:opacity-40">
+                Buscar CNPJ
+              </button>
+            </div>
+          </label>
+          {!docOk && <p className="mt-1 text-xs text-red-600">Número inválido.</p>}
+        </div>
+        <label className="block">{rotulo("Razão social")}<input className={campo} value={f.razao_social} onChange={(e) => set("razao_social", e.target.value)} /></label>
+        <label className="block">{rotulo("Site")}<input className={campo} value={f.site} onChange={(e) => set("site", e.target.value)} placeholder="https://" /></label>
+        <label className="block">{rotulo("E-mail")}<input type="email" className={campo} value={f.email} onChange={(e) => set("email", e.target.value)} /></label>
+        <label className="block">{rotulo("Telefone")}<input className={campo} value={f.telefone} onChange={(e) => set("telefone", e.target.value)} /></label>
+      </Secao>
+
+      <Secao titulo="Unidade de produção" descricao="Informe sempre o local onde o cliente produz/trata/beneficia as sementes — nunca revenda, loja ou filial comercial.">
+        <label className="block sm:col-span-2">{rotulo("Endereço da unidade")}<input className={campo} value={f.endereco} onChange={(e) => set("endereco", e.target.value)} placeholder="Rua, número, bairro / rodovia e km" /></label>
+        <div className="relative">
+          <label>{rotulo("Cidade")}
+            <input className={campo} value={f.cidade} autoComplete="off"
+              onChange={(e) => { set("cidade", e.target.value); setSugestoes([]); }}
+              onFocus={() => setSugestoes(sugestoesCidade)} onKeyUp={() => setSugestoes(sugestoesCidade)} />
+          </label>
+          {sugestoes.length > 0 && (
+            <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-lg ring-1 ring-slate-200">
+              {sugestoes.map((m) => (
+                <li key={m.ibge}><button type="button" onClick={() => escolherMunicipio(m)} className="block w-full px-3 py-1.5 text-left hover:bg-sky-50">{m.nome} / {m.uf}</button></li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <label className="block">{rotulo("UF")}
+          <select className={campo} value={f.uf} onChange={(e) => set("uf", e.target.value)}>
+            <option value="" />{UFS.map((u) => <option key={u}>{u}</option>)}
+          </select>
+        </label>
+        <label className="block">{rotulo("CEP")}<input className={campo} value={f.cep} onChange={(e) => set("cep", e.target.value)} /></label>
+
+        <div className="sm:col-span-2">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <button type="button" onClick={buscarEndereco} disabled={consultando || !(f.endereco || f.cidade)}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50 disabled:opacity-40">
+              Localizar endereço no mapa
+            </button>
+            <span className="text-xs text-slate-500">ou clique no mapa / arraste o pino até a unidade de produção</span>
+            {ponto && <button type="button" onClick={() => { setPonto(null); setPrecisao("exata"); }} className="ml-auto text-xs text-slate-500 underline">Remover ponto</button>}
+          </div>
+          {achados.length > 0 && (
+            <ul className="mb-2 space-y-1 rounded-lg bg-slate-50 p-2 text-sm ring-1 ring-slate-200">
+              {achados.map((a, i) => (
+                <li key={i}><button type="button" className="text-left hover:underline" onClick={() => { setPonto({ lat: a.lat, lng: a.lng }); setPrecisao("manual"); setAchados([]); }}>{a.descricao}</button></li>
+              ))}
+            </ul>
+          )}
+          <SeletorPonto ponto={ponto} aoMudar={(p) => { setPonto(p); setPrecisao("manual"); }} />
+          <p className="mt-1 text-xs text-slate-500">
+            {ponto ? (precisao === "cidade" ? "Ponto aproximado (centro da cidade) — ajuste para a unidade." : "Ponto definido.") : "Sem ponto: o cliente não aparece no mapa."}
+          </p>
+        </div>
+      </Secao>
+
+      <Secao titulo="Comercial">
+        <div className="sm:col-span-2">
+          {rotulo("Frentes")}
+          <div className="flex flex-wrap gap-4 text-sm">
+            {listaFrentes.map((fr) => (
+              <label key={fr.slug} className="flex cursor-pointer items-center gap-2">
+                <input type="checkbox" className="size-4 accent-brand-blue" checked={frentes.has(fr.slug)}
+                  onChange={(e) => setFrentes((s) => { const n = new Set(s); if (e.target.checked) n.add(fr.slug); else n.delete(fr.slug); return n; })} />
+                {fr.nome}
+              </label>
+            ))}
+          </div>
+        </div>
+        <label className="block">{rotulo("Situação")}
+          <select className={campo} value={f.status} onChange={(e) => set("status", e.target.value as Form["status"])}>
+            <option value="prospect">Prospect</option><option value="carteira">Cliente (carteira)</option><option value="perdido">Perdido</option>
+          </select>
+        </label>
+        <label className="block">{rotulo("Etapa do funil")}
+          <select className={campo} value={f.etapa_id} onChange={(e) => set("etapa_id", e.target.value)}>
+            <option value="" />{etapas.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
+          </select>
+        </label>
+        {f.status === "perdido" && (
+          <label className="block sm:col-span-2">{rotulo("Motivo da perda *")}
+            <select className={campo} value={f.motivo_perda_id} onChange={(e) => set("motivo_perda_id", e.target.value)}>
+              <option value="" />{motivos.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
+            </select>
+          </label>
+        )}
+        {gestao && (
+          <label className="block sm:col-span-2">{rotulo("Vendedor", "(vazio = automático pelo território)")}
+            <select className={campo} value={f.vendedor_id} onChange={(e) => set("vendedor_id", e.target.value)}>
+              <option value="" />{vendedores.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
+            </select>
+          </label>
+        )}
+        <label className="block">{rotulo("Porte")}
+          <select className={campo} value={f.porte} onChange={(e) => set("porte", e.target.value)}>
+            <option value="" /><option>Pequeno</option><option>Médio</option><option>Grande</option>
+          </select>
+        </label>
+        <label className="block">{rotulo("Equipamento")}<input className={campo} value={f.equipamento} onChange={(e) => set("equipamento", e.target.value)} placeholder="Betoneira, Coater…" /></label>
+        <label className="block">{rotulo("Potencial", "(ton/ano)")}<input className={campo} inputMode="decimal" value={f.potencial_ton_ano} onChange={(e) => set("potencial_ton_ano", e.target.value)} /></label>
+        <label className="block">{rotulo("Ritmo", "(ton/mês)")}<input className={campo} inputMode="decimal" value={f.ritmo_ton_mes} onChange={(e) => set("ritmo_ton_mes", e.target.value)} /></label>
+        <label className="block">{rotulo("Condição de pagamento")}<input className={campo} value={f.condicao_pagamento} onChange={(e) => set("condicao_pagamento", e.target.value)} /></label>
+        <label className="block">{rotulo("Alerta financeiro")}<input className={campo} value={f.alerta_financeiro} onChange={(e) => set("alerta_financeiro", e.target.value)} /></label>
+        <label className="block sm:col-span-2">{rotulo("Observações")}<textarea rows={4} className={campo} value={f.observacoes} onChange={(e) => set("observacoes", e.target.value)} /></label>
+      </Secao>
+
+      {erro && <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">{erro}</p>}
+      {aviso && <p role="status" className="rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-900 ring-1 ring-sky-200">{aviso}</p>}
+
+      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:ring-1 sm:ring-slate-200">
+        <button disabled={salvando} className="rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-brand-blue-dark disabled:opacity-60">
+          {salvando ? "Salvando…" : clienteId ? "Salvar alterações" : "Cadastrar cliente"}
+        </button>
+        <button type="button" onClick={() => router.back()} className="rounded-lg px-4 py-2.5 text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">Cancelar</button>
+      </div>
+    </form>
+  );
+}
+
+function Secao({ titulo, descricao, children }: { titulo: string; descricao?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
+      <h2 className="text-base font-semibold">{titulo}</h2>
+      {descricao && <p className="mt-1 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-sky-200">{descricao}</p>}
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    </section>
+  );
+}
