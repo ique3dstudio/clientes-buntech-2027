@@ -20,7 +20,7 @@ type Ficha = {
   cliente: { email: string | null; site: string | null; endereco: string | null; observacoes: string | null; equipamento: string | null } | null;
 };
 
-export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
+export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: boolean; selecionadoInicial?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaGL | null>(null);
   // O mapa "pronto" é guardado como objeto (não booleano): com Cache Components a página pode ser
@@ -29,7 +29,7 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
   const [clientes, setClientes] = useState<ClienteMapa[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [avisoMapa, setAvisoMapa] = useState<string | null>(null);
-  const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(selecionadoInicial ?? null);
   const [busca, setBusca] = useState("");
   const [frentes, setFrentes] = useState<Record<string, boolean>>({ pastagens: true, "grandes-culturas": true, nenhuma: true });
   const [status, setStatus] = useState<Record<string, boolean>>({ carteira: true, prospect: true, perdido: false });
@@ -281,6 +281,9 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
             </div>
             <button onClick={() => setSelecionadoId(null)} className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100" aria-label="Fechar">✕</button>
           </div>
+          <Link href={`/clientes/${selecionado.id}`} className="mt-3 mr-2 inline-block rounded-lg bg-brand-blue px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-blue-dark">
+            Ficha completa
+          </Link>
           {podeEditar && (
             <Link href={`/clientes/${selecionado.id}/editar`} className="mt-3 inline-block rounded-lg px-3 py-1.5 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">
               Editar cliente

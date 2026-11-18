@@ -235,7 +235,7 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
         const { error } = await supabase.from("cliente_frentes").insert(linhas);
         if (error) throw error;
       }
-      router.push("/mapa");
+      router.push(clienteId ? `/clientes/${clienteId}` : `/clientes/${id}`);
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : (err as { message?: string }).message ?? String(err);

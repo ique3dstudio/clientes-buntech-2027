@@ -8,21 +8,22 @@ import { MapaClientes } from "./MapaClientes";
 
 export const metadata: Metadata = { title: "Mapa" };
 
-export default function MapaPage() {
+export default function MapaPage({ searchParams }: PageProps<"/mapa">) {
   return (
     <Suspense fallback={<Carregando />}>
-      <Mapa />
+      <Mapa searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function Mapa() {
+async function Mapa({ searchParams }: { searchParams: PageProps<"/mapa">["searchParams"] }) {
+  const { c } = await searchParams;
   const usuario = await getUsuario();
   if (usuario.papel === "pendente") return <AguardandoAprovacao nome={usuario.nome} />;
   return (
     <div className="flex h-screen flex-col">
       <Cabecalho usuario={usuario} />
-      <MapaClientes podeEditar={usuario.papel !== "leitura"} />
+      <MapaClientes podeEditar={usuario.papel !== "leitura"} selecionadoInicial={typeof c === "string" ? c : undefined} />
     </div>
   );
 }
