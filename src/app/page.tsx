@@ -79,8 +79,8 @@ async function Inicio() {
         </Link>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {atalhos.map((a) => (
-            <Link key={a.href} href={a.href} className="group flex items-start gap-3.5 rounded-2xl bg-white p-4 ring-1 ring-slate-200 transition-[box-shadow,transform] duration-300 [transition-timing-function:var(--ease-suave)] hover:-translate-y-0.5 hover:shadow-md">
+          {atalhos.map((a, n) => (
+            <Link key={a.href} href={a.href} style={{ "--i": n + 1 } as React.CSSProperties} className="entrar elevar group flex items-start gap-3.5 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
               <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${a.destaque ? "bg-amber-100 text-amber-700" : "bg-brand-blue/10 text-brand-blue"}`}>
                 <a.icone size={22} />
               </span>
@@ -96,8 +96,8 @@ async function Inicio() {
           <h2 className="text-xl">Territórios</h2>
           <p className="mt-1 text-sm text-slate-500">No mapa, cada território aparece com a linha tracejada na cor abaixo.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {territorios?.map((t) => (
-              <article key={t.id} className="relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200">
+            {territorios?.map((t, n) => (
+              <article key={t.id} style={{ "--i": n + 4 } as React.CSSProperties} className="entrar relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200">
                 <span aria-hidden className="absolute inset-y-0 left-0 w-1.5" style={{ background: t.cor }} />
                 <div className="flex items-start justify-between gap-3 pl-1.5">
                   <div className="min-w-0">

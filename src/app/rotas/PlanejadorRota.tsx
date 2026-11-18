@@ -133,7 +133,7 @@ export function PlanejadorRota() {
                   const marcado = marcados.includes(c.id);
                   const meses = mesesSemComprar(c.ultima_compra);
                   return (
-                    <li key={c.id} className="flex items-start gap-3 py-2.5">
+                    <li key={c.id} className="entrar flex items-start gap-3 py-2.5">
                       <input type="checkbox" checked={marcado} onChange={() => alternar(c.id)} className="mt-1 size-4 accent-brand-blue" aria-label={`Incluir ${c.nome} na rota`} />
                       <div className="min-w-0 flex-1 text-sm">
                         <Link href={`/clientes/${c.id}`} className="font-medium hover:text-brand-blue hover:underline">{c.nome}</Link>

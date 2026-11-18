@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapaGL, GeoJSONSource } from "maplibre-gl";
 import Link from "next/link";
+import { Warning, X } from "@phosphor-icons/react";
 import { BRASIL, criarMapa } from "@/lib/geo/maplibre";
 import { createClient } from "@/lib/supabase/client";
 import { normalizar } from "@/lib/texto";
@@ -197,8 +198,9 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
     return () => { vivo = false; };
   }, [selecionadoId, mapaPronto, clientes]);
 
-  const chip = (ativo: boolean, cor: string) =>
-    `flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${ativo ? "bg-white text-slate-800 ring-slate-300" : "bg-slate-100 text-slate-400 ring-transparent"}` + (cor ? "" : "");
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const chip = (ativo: boolean) =>
+    `flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition-[background-color,color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-blue ${ativo ? "bg-white text-slate-800 shadow-sm ring-slate-300" : "bg-slate-100 text-slate-400 ring-transparent"}`;
 
   return (
     <div className="relative flex min-h-0 flex-1">
@@ -206,16 +208,23 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
 
       {/* Barra de filtros */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
-        <div className="pointer-events-auto w-full max-w-sm rounded-xl bg-white/95 p-3 shadow-lg ring-1 ring-slate-200 backdrop-blur">
-          <input
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar cliente, cidade ou CNPJ…"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30"
-          />
+        <div className="vidro pointer-events-auto entrar w-full max-w-sm rounded-2xl bg-white/90 p-3 shadow-lg ring-1 ring-slate-200/80 backdrop-blur-xl">
+          <div className="flex gap-2">
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar cliente, cidade ou CNPJ"
+              aria-label="Buscar"
+              className="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-sm"
+            />
+            <button type="button" onClick={() => setFiltrosAbertos((v) => !v)} aria-expanded={filtrosAbertos} className="shrink-0 rounded-xl bg-slate-100 px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-200 sm:hidden">
+              Filtros
+            </button>
+          </div>
+          <div className={`${filtrosAbertos ? "block" : "hidden"} sm:block`}>
           <div className="mt-3 flex flex-wrap gap-2">
             {([["pastagens", "Pastagens", COR_FRENTE.pastagens], ["grandes-culturas", "Grandes Culturas", COR_FRENTE["grandes-culturas"]], ["nenhuma", "Sem frente", COR_FRENTE.nenhuma]] as const).map(([k, rotulo, cor]) => (
-              <label key={k} className={chip(frentes[k], cor)}>
+              <label key={k} className={chip(frentes[k])}>
                 <input type="checkbox" className="sr-only" checked={frentes[k]} onChange={(e) => setFrentes((s) => ({ ...s, [k]: e.target.checked }))} />
                 <span className="size-3 rounded-full" style={{ background: cor }} />{rotulo}
               </label>
@@ -223,7 +232,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {(["carteira", "prospect", "perdido"] as const).map((k) => (
-              <label key={k} className={chip(status[k], COR_STATUS[k])}>
+              <label key={k} className={chip(status[k])}>
                 <input type="checkbox" className="sr-only" checked={status[k]} onChange={(e) => setStatus((s) => ({ ...s, [k]: e.target.checked }))} />
                 <span className="size-3 rounded-full ring-2 ring-white" style={{ background: "#fff", boxShadow: `0 0 0 2px ${COR_STATUS[k]}` }} />{ROTULO_STATUS[k]}
               </label>
@@ -234,18 +243,19 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
               <input type="checkbox" className="size-4 accent-brand-blue" checked={mostrarTerritorios} onChange={(e) => setMostrarTerritorios(e.target.checked)} />
               Territórios
             </label>
-            <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs">
+            <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-xs">
               <option value="">Todos os vendedores</option>
               {territorios.filter((t) => t.vendedor_id).map((t) => <option key={t.id} value={t.vendedor_id!}>{t.vendedor}</option>)}
             </select>
           </div>
           {podeEditar && (
-            <Link href="/clientes/novo" className="mt-3 block rounded-lg bg-brand-blue px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-blue-dark">
+            <Link href="/clientes/novo" className="mt-3 block rounded-xl bg-brand-blue px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-blue-dark">
               + Novo cliente
             </Link>
           )}
+          </div>
           <p className="mt-3 text-xs text-slate-500">
-            {visiveis.length} no mapa{semLocal > 0 && <> · {semLocal} sem localização</>}
+            <span className="font-semibold tabular-nums text-slate-700">{visiveis.length}</span> no mapa{semLocal > 0 && <> · {semLocal} sem localização</>}
           </p>
           {erro && <p className="mt-1 text-xs text-red-600">{erro}</p>}
           {avisoMapa && <p className="mt-1 text-xs text-amber-600">{avisoMapa}</p>}
@@ -256,7 +266,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
       </div>
 
       {/* Legenda */}
-      <div className="pointer-events-none absolute bottom-6 left-3 z-10 hidden rounded-xl bg-white/95 p-3 text-xs shadow-lg ring-1 ring-slate-200 sm:block">
+      <div className="vidro pointer-events-none absolute bottom-6 left-3 z-10 hidden rounded-2xl bg-white/90 p-3.5 text-xs shadow-lg ring-1 ring-slate-200/80 backdrop-blur-xl sm:block">
         <p className="font-semibold text-slate-700">Cor = frente · Borda = situação</p>
         <p className="mt-1 text-slate-500">Ponto claro = localizado só pela cidade</p>
         {territorios.length > 0 && (
@@ -273,19 +283,20 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
 
       {/* Ficha */}
       {selecionado && (
-        <aside className="absolute inset-x-0 bottom-0 z-20 max-h-[65%] overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl ring-1 ring-slate-200 sm:inset-y-3 sm:right-3 sm:left-auto sm:max-h-none sm:w-96 sm:rounded-2xl">
+        <aside key={selecionado.id} className="folha-sobe absolute inset-x-0 bottom-0 z-20 max-h-[68%] overflow-y-auto overscroll-contain rounded-t-3xl bg-white p-5 shadow-lg ring-1 ring-slate-200 sm:inset-y-3 sm:right-3 sm:left-auto sm:max-h-none sm:w-96 sm:rounded-3xl">
+          <div className="mx-auto -mt-1 mb-3 h-1.5 w-10 rounded-full bg-slate-200 sm:hidden" />
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="truncate text-lg font-semibold">{selecionado.nome}</h2>
+              <h2 className="truncate text-xl">{selecionado.nome}</h2>
               <p className="text-sm text-slate-500">{[selecionado.cidade, selecionado.uf].filter(Boolean).join(" / ") || "Local não informado"}</p>
             </div>
-            <button onClick={() => setSelecionadoId(null)} className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100" aria-label="Fechar">✕</button>
+            <button onClick={() => setSelecionadoId(null)} className="grid size-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100" aria-label="Fechar"><X size={20} /></button>
           </div>
-          <Link href={`/clientes/${selecionado.id}`} className="mt-3 mr-2 inline-block rounded-lg bg-brand-blue px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-blue-dark">
+          <Link href={`/clientes/${selecionado.id}`} className="mt-3 mr-2 inline-block rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue-dark">
             Ficha completa
           </Link>
           {podeEditar && (
-            <Link href={`/clientes/${selecionado.id}/editar`} className="mt-3 inline-block rounded-lg px-3 py-1.5 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">
+            <Link href={`/clientes/${selecionado.id}/editar`} className="mt-3 inline-block rounded-xl px-4 py-2 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">
               Editar cliente
             </Link>
           )}
@@ -299,7 +310,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
             {selecionado.porte && <span className="rounded-full bg-slate-100 px-2.5 py-1">{selecionado.porte}</span>}
           </div>
           {selecionado.alerta_financeiro && (
-            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200">⚠ {selecionado.alerta_financeiro}</p>
+            <p className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800 ring-1 ring-amber-200"><Warning size={18} className="mt-0.5 shrink-0" />{selecionado.alerta_financeiro}</p>
           )}
           <dl className="mt-4 space-y-2 text-sm">
             {selecionado.razao_social && <Linha t="Razão social" v={selecionado.razao_social} />}

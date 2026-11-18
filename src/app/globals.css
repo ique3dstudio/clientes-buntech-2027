@@ -36,6 +36,7 @@
   --shadow-lg: 0 18px 40px -12px rgb(14 27 42 / 0.16), 0 4px 10px -4px rgb(14 27 42 / 0.06);
 
   --ease-suave: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 :root {
@@ -100,7 +101,33 @@ p, li { text-wrap: pretty; }
 
 /* Entrada suave das páginas */
 @keyframes subir { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-main { width: 100%; min-width: 0; animation: subir 0.5s var(--ease-suave) both; }
+main { width: 100%; min-width: 0; animation: entrar-leve 0.28s var(--ease-out) both; }
+
+
+/* ---- Movimento ----------------------------------------------------------
+   Regras: só transform e opacity, curvas fortes de saída (ease-out), até 350 ms.
+   Páginas e listas entram uma vez; ações repetidas (arrastar, alternar) usam transição, não keyframes. */
+@keyframes entrar-leve { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes entrar { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.96) translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes fundo { from { opacity: 0; } to { opacity: 1; } }
+@keyframes folha-sobe { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes painel-direita { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+
+/* Entrada escalonada: style={{ "--i": indice }} (limita em 12 itens, 40 ms de intervalo) */
+.entrar { animation: entrar 0.38s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 12) * 40ms); }
+.pop { animation: pop 0.2s var(--ease-out) both; }
+.fundo { animation: fundo 0.2s ease both; }
+.folha-sobe { animation: folha-sobe 0.32s var(--ease-suave) both; }
+.painel-direita { animation: painel-direita 0.28s var(--ease-out) both; }
+/* No computador a ficha entra pela direita, no celular sobe de baixo */
+@media (min-width: 40rem) { .folha-sobe { animation: painel-direita 0.28s var(--ease-out) both; } }
+
+/* Elevação ao passar o mouse: só em dispositivos com mouse */
+.elevar { transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .elevar:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+}
 
 /* Tabelas largas rolam dentro do cartão, nunca estouram a tela */
 table { font-variant-numeric: tabular-nums; }
@@ -110,7 +137,7 @@ table { font-variant-numeric: tabular-nums; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .vidro { background: #fff !important; backdrop-filter: none !important; }

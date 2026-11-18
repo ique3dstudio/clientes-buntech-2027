@@ -73,7 +73,7 @@ export function ListaTarefas({ userId, podeCriar }: { userId: string; podeCriar:
   }
 
   const linha = (t: Tarefa, tom?: string) => (
-    <li key={t.id} className="flex items-start gap-3 py-2.5">
+    <li key={t.id} className="entrar flex items-start gap-3 py-2.5">
       <input type="checkbox" checked={Boolean(t.concluida_em)} onChange={() => alternar(t)} className="mt-1 size-4 accent-brand-blue" aria-label="Concluir" />
       <div className="min-w-0 flex-1">
         <p className={`text-sm ${t.concluida_em ? "text-slate-400 line-through" : "text-slate-800"}`}>{t.titulo}</p>
@@ -99,7 +99,7 @@ export function ListaTarefas({ userId, podeCriar }: { userId: string; podeCriar:
   return (
     <div className="mt-6 space-y-5">
       {podeCriar && (
-        <form onSubmit={criar} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <form onSubmit={criar} className="entrar rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
             <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nova tarefa (ex.: ligar para o dono, levar amostra)" className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-blue" />
             <input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />

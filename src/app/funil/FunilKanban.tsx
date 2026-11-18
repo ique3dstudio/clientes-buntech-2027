@@ -106,7 +106,7 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
     void mover(id, destino);
   }
 
-  if (carregando) return <p className="p-8 text-slate-500">Carregando o funil…</p>;
+  if (carregando) return <p className="p-8 text-slate-500" role="status">Carregando o funil…</p>;
 
   const colunasVisiveis: { chave: string; nome: string; cor: string }[] = [
     ...(colunas.has("sem") ? [{ chave: "sem", nome: "Sem etapa", cor: "#cbd5e1" }] : []),
@@ -116,60 +116,67 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
-        <h1 className="mr-2 text-lg font-semibold">Funil de vendas</h1>
-        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar cliente ou cidade…" className="w-56 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-brand-blue" />
-        <select value={vendedor} onChange={(e) => setVendedor(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
-          <option value="">Todos os vendedores</option>
-          {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nome}</option>)}
-        </select>
-        <select value={frente} onChange={(e) => setFrente(e.target.value)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm">
-          <option value="">Todas as frentes</option>
-          <option value="pastagens">Pastagens</option>
-          <option value="grandes-culturas">Grandes Culturas</option>
-        </select>
-        <span className="text-sm text-slate-500">{filtrados.length} clientes</span>
-        {erro && <span className="text-sm text-red-600">{erro}</span>}
-        {!podeEditar && <span className="text-sm text-slate-400">somente leitura</span>}
+      <div className="flex flex-col gap-3 px-4 pb-1 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
+        <div className="mr-auto">
+          <h1 className="text-2xl">Funil de vendas</h1>
+          <p className="text-sm text-slate-500">
+            {filtrados.length} clientes{!podeEditar && " · somente leitura"}
+            {erro && <span className="ml-2 text-red-600">{erro}</span>}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar cliente ou cidade" aria-label="Buscar" className="col-span-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm sm:w-60" />
+          <select value={vendedor} onChange={(e) => setVendedor(e.target.value)} aria-label="Vendedor" className="rounded-xl border border-slate-200 bg-white px-3 text-sm">
+            <option value="">Todos os vendedores</option>
+            {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nome}</option>)}
+          </select>
+          <select value={frente} onChange={(e) => setFrente(e.target.value)} aria-label="Frente" className="rounded-xl border border-slate-200 bg-white px-3 text-sm">
+            <option value="">Todas as frentes</option>
+            <option value="pastagens">Pastagens</option>
+            <option value="grandes-culturas">Grandes Culturas</option>
+          </select>
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto bg-slate-100 p-3">
-        {colunasVisiveis.map((col) => {
+      <div className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-4 pt-3 sm:snap-none sm:px-6">
+        {colunasVisiveis.map((col, n) => {
           const lista = colunas.get(col.chave) ?? [];
           const limite = mostrar[col.chave] ?? POR_COLUNA;
           return (
             <section
               key={col.chave}
+              style={{ "--i": n } as React.CSSProperties}
               onDragOver={(e) => { if (podeEditar) { e.preventDefault(); setSobre(col.chave); } }}
               onDragLeave={() => setSobre((s) => (s === col.chave ? null : s))}
               onDrop={() => soltar(col.chave)}
-              className={`flex w-72 shrink-0 flex-col rounded-xl bg-slate-50 ring-1 transition ${sobre === col.chave ? "ring-2 ring-brand-blue" : "ring-slate-200"}`}
+              className={`entrar flex w-[82vw] max-w-80 shrink-0 snap-start flex-col rounded-2xl p-1.5 ring-1 transition-[background-color,box-shadow] duration-200 sm:w-72 ${sobre === col.chave ? "bg-brand-blue/10 ring-2 ring-brand-blue" : "bg-slate-200/50 ring-slate-200"}`}
             >
-              <header className="flex items-center justify-between border-b border-slate-200 px-3 py-2.5" style={{ borderTop: `4px solid ${col.cor}`, borderRadius: "0.75rem 0.75rem 0 0" }}>
-                <h2 className="text-sm font-semibold">{col.nome}</h2>
-                <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-600 ring-1 ring-slate-200">{lista.length}</span>
+              <header className="flex items-center gap-2 px-2.5 pb-2 pt-2">
+                <span aria-hidden className="size-2.5 rounded-full" style={{ background: col.cor }} />
+                <h2 className="text-sm">{col.nome}</h2>
+                <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-semibold tabular-nums text-slate-600">{lista.length}</span>
               </header>
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-0.5 pb-1">
                 {lista.slice(0, limite).map((c) => (
                   <article
                     key={c.id}
                     draggable={podeEditar}
                     onDragStart={() => setArrastando(c.id)}
                     onDragEnd={() => { setArrastando(null); setSobre(null); }}
-                    className={`rounded-lg bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200 ${podeEditar ? "cursor-grab active:cursor-grabbing" : ""} ${arrastando === c.id ? "opacity-40" : ""}`}
+                    className={`elevar rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200 ${podeEditar ? "cursor-grab active:cursor-grabbing" : ""} ${arrastando === c.id ? "scale-[0.97] opacity-40" : ""}`}
                   >
-                    <Link href={`/clientes/${c.id}`} className="font-medium hover:text-brand-blue hover:underline">{c.nome}</Link>
-                    <p className="text-xs text-slate-500">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "—"}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <Link href={`/clientes/${c.id}`} className="font-semibold leading-snug hover:text-brand-blue">{c.nome}</Link>
+                    <p className="mt-0.5 text-xs text-slate-500">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "Sem cidade"}</p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
                       {c.frentes.map((f) => <span key={f} className="rounded-full px-2 py-0.5 text-white" style={{ background: f === "pastagens" ? COR_FRENTE.pastagens : COR_FRENTE["grandes-culturas"] }}>{f === "pastagens" ? "Pastagens" : "Grandes Culturas"}</span>)}
                       {c.vendedor_id && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{nomeVendedor.get(c.vendedor_id) ?? ""}</span>}
                     </div>
                     {podeEditar && (
                       <select
-                        aria-label="Mover para…"
+                        aria-label="Mover para"
                         value=""
                         onChange={(e) => { const d = e.target.value; if (!d) return; if (d === "perdido") { setPedindoMotivo({ id: c.id, nome: c.nome }); setMotivoEscolhido(""); } else void mover(c.id, d); }}
-                        className="mt-2 w-full rounded border border-slate-200 bg-slate-50 px-1.5 py-1 text-xs text-slate-500"
+                        className="mt-2.5 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-600"
                       >
                         <option value="">Mover para…</option>
                         {colunasVisiveis.filter((x) => x.chave !== col.chave && x.chave !== "sem").map((x) => <option key={x.chave} value={x.chave}>{x.nome}</option>)}
@@ -178,11 +185,11 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
                   </article>
                 ))}
                 {lista.length > limite && (
-                  <button onClick={() => setMostrar((m) => ({ ...m, [col.chave]: limite + POR_COLUNA }))} className="w-full rounded-lg py-2 text-xs font-medium text-brand-blue hover:bg-white">
+                  <button onClick={() => setMostrar((m) => ({ ...m, [col.chave]: limite + POR_COLUNA }))} className="w-full rounded-xl py-2.5 text-xs font-semibold text-brand-blue hover:bg-white/70">
                     Mostrar mais ({lista.length - limite})
                   </button>
                 )}
-                {lista.length === 0 && <p className="px-2 py-6 text-center text-xs text-slate-400">Vazio</p>}
+                {lista.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 px-2 py-8 text-center text-xs text-slate-400">Nenhum cliente aqui</p>}
               </div>
             </section>
           );
@@ -190,18 +197,18 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
       </div>
 
       {pedindoMotivo && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-            <h3 className="font-semibold">Marcar como perdido</h3>
+        <div className="fundo fixed inset-0 z-50 grid place-items-center bg-brand-ink/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="pop w-full max-w-sm rounded-3xl bg-white p-6 shadow-lg">
+            <h3 className="text-lg">Marcar como perdido</h3>
             <p className="mt-1 text-sm text-slate-500">{pedindoMotivo.nome}</p>
-            <select value={motivoEscolhido} onChange={(e) => setMotivoEscolhido(e.target.value)} className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            <select value={motivoEscolhido} onChange={(e) => setMotivoEscolhido(e.target.value)} className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm">
               <option value="">Motivo da perda…</option>
               {motivos.map((m) => <option key={m.id} value={m.id}>{m.nome}</option>)}
             </select>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setPedindoMotivo(null)} className="rounded-lg px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-300">Cancelar</button>
+              <button onClick={() => setPedindoMotivo(null)} className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">Cancelar</button>
               <button disabled={!motivoEscolhido} onClick={() => { void mover(pedindoMotivo.id, "perdido", Number(motivoEscolhido)); setPedindoMotivo(null); }}
-                className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Confirmar</button>
+                className="rounded-xl bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-dark disabled:opacity-40">Confirmar</button>
             </div>
           </div>
         </div>

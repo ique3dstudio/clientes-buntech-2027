@@ -3,9 +3,9 @@ import type { DadosPainel } from "@/lib/painel-dados";
 
 export const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-export function Kpi({ rotulo, valor, detalhe }: { rotulo: string; valor: string | number; detalhe?: string }) {
+export function Kpi({ rotulo, valor, detalhe, i = 0 }: { rotulo: string; valor: string | number; detalhe?: string; i?: number }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+    <div style={{ "--i": i } as React.CSSProperties} className="entrar rounded-2xl border border-slate-200 bg-white p-4">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{rotulo}</p>
       <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-slate-900">{valor}</p>
       {detalhe && <p className="mt-0.5 text-xs text-slate-500">{detalhe}</p>}
@@ -38,12 +38,12 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi rotulo="Cadastros" valor={s.total} />
-        <Kpi rotulo="Clientes" valor={s.carteira} detalhe="na carteira" />
-        <Kpi rotulo="Prospects" valor={s.prospect} />
-        <Kpi rotulo="Perdidos" valor={s.perdido} />
-        <Kpi rotulo="Sem localização" valor={s.semLocal} detalhe={`${s.aproximado} aproximados`} />
-        <Kpi rotulo="Tarefas atrasadas" valor={d.tarefasAtrasadas} />
+        <Kpi rotulo="Cadastros" valor={s.total}  i={1} />
+        <Kpi rotulo="Clientes" valor={s.carteira} detalhe="na carteira"  i={2} />
+        <Kpi rotulo="Prospects" valor={s.prospect}  i={3} />
+        <Kpi rotulo="Perdidos" valor={s.perdido}  i={4} />
+        <Kpi rotulo="Sem localização" valor={s.semLocal} detalhe={`${s.aproximado} aproximados`}  i={5} />
+        <Kpi rotulo="Tarefas atrasadas" valor={d.tarefasAtrasadas}  i={6} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

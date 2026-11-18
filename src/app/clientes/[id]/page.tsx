@@ -277,8 +277,8 @@ function Indicador({ t, v, sub, alerta }: { t: string; v: string; sub?: string; 
 
 function Cartao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 className="mb-3 text-base font-semibold">{titulo}</h2>
+    <section className="entrar min-w-0 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <h2 className="mb-3 text-lg">{titulo}</h2>
       {children}
     </section>
   );
