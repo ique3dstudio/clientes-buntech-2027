@@ -84,7 +84,7 @@ territórios de cada vendedor delimitados por linha tracejada, e gestão complet
 - "Prospects perto de mim": lista de sementeiras não visitadas em raio de X km da minha posição.
 
 ### 3.5 Importação e fontes de prospects
-- **Anuário ABRASEM 2019/2020** (PDF): 386 empresas sementeiras extraídas (associações de MT, MS, GO, MG, SP, PR, SC, RS, MATOPIBA e produtores de forrageiras) e entregues em planilha pronta para a tela Importar. Frentes deduzidas das culturas (soja/milho/trigo… → Grandes Culturas; braquiária/capim/azevém/forrageiras → Pastagens; hortaliças → sem frente). Localização inicial = cidade do endereço; a tela **Completar dados** refina.
+- **Anuário ABRASEM 2019/2020** (PDF): **378 empresas sementeiras inseridas** no banco (associações de MT, MS, GO, MG, SP, PR, SC, RS, MATOPIBA e produtores de forrageiras; 8 nomes repetidos foram unificados e 21 já eram clientes). Frentes deduzidas das culturas (soja/milho/trigo… → Grandes Culturas; braquiária/capim/azevém/forrageiras → Pastagens; hortaliças → sem frente). Localização inicial = cidade do endereço; a tela **Completar dados** refina.
 - Importar planilha Excel/CSV com **geocodificação em lote** e detecção de duplicados por CNPJ.
 - Exportar para Excel/CSV/PDF (respeitando permissões).
 - Fonte de leads: cadastro oficial de produtores de sementes (RENASEM/MAPA) e CNAE de beneficiamento de sementes via base CNPJ da Receita — a validar viabilidade e atualização dos dados na fase de dados.
