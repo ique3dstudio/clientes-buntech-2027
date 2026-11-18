@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ehDiretorio, escolherSites, extrairEmails, extrairTelefones, formatarTelefone } from "./enriquecimento";
+import { ehDiretorio, escolherSites, extrairCnpjs, extrairEmails, extrairTelefones, formatarTelefone, similaridade } from "./enriquecimento";
 
 describe("enriquecimento", () => {
   it("reconhece diretórios e redes sociais", () => {
@@ -27,5 +27,14 @@ describe("enriquecimento", () => {
     expect(formatarTelefone("6232914451")).toBe("(62) 3291-4451");
     expect(formatarTelefone("62999991234")).toBe("(62) 99999-1234");
     expect(formatarTelefone("5562999991234")).toBe("(62) 99999-1234");
+  });
+  it("extrai só CNPJs válidos", () => {
+    expect(extrairCnpjs("Agrosol CNPJ 11.222.333/0001-81 e 11.222.333/0001-82")).toEqual(["11222333000181"]);
+  });
+  it("mede a semelhança de nomes ignorando palavras genéricas", () => {
+    expect(similaridade("Sementes Agrosol", "AGRO SOL LTDA")).toBe(0); // palavras coladas × separadas
+    expect(similaridade("Sementes Pastotech", "PASTOTECH SEMENTES LTDA")).toBe(1);
+    expect(similaridade("Sementes Cajueiro", "Fazenda Cajueiro Agropecuária Ltda")).toBe(1);
+    expect(similaridade("Sementes Boi Gordo", "Sementes Safrasul Ltda")).toBe(0);
   });
 });

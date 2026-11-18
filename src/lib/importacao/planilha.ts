@@ -17,6 +17,9 @@ export type ClienteImport = {
   documento: string | null;
   site: string | null;
   email: string | null;
+  telefone: string | null;
+  cep: string | null;
+  frentes: string[] | null; // null = deduzir pelos produtos comprados; [] = nenhuma frente
   endereco: string | null;
   cidade: string | null;
   uf: string | null;
@@ -41,7 +44,7 @@ export type UnidadeImport = {
   cliente_id: string; codigo_totvs: string | null; loja: string | null; razao_social: string | null;
   documento: string | null; cidade: string | null; uf: string | null; principal: boolean;
 };
-export type ContatoImport = { cliente_id: string; nome: string | null; telefone: string | null };
+export type ContatoImport = { cliente_id: string; nome: string | null; cargo: string | null; telefone: string | null; email: string | null };
 export type PedidoImport = {
   cliente_id: string; data: string; produto_nome: string | null; quantidade: number | null;
   unidade: string; valor_total: number | null; tipo: string | null;
@@ -58,6 +61,7 @@ export type Relatorio = {
   documentoDuplicado: string[];
   criadosDoHistorico: string[];
   naoEncontrados: string[];
+  jaCadastrados: string[];
 };
 
 export type Importacao = {
@@ -124,11 +128,28 @@ function cidadeDoEndereco(end: unknown, idx: IndiceMunicipios): [string | null, 
   return [null, null];
 }
 
-export function montarImportacao(abas: Abas, idx: IndiceMunicipios, novoId: () => string, hoje: string): Importacao {
+export type Existente = { nome: string; documento: string | null };
+
+/** "pastagens;grandes-culturas" → ["pastagens","grandes-culturas"]; "nenhuma" → []; vazio → null */
+export function lerFrentes(v: unknown): string[] | null {
+  const t = normalizar(v);
+  if (!t) return null;
+  if (t === "nenhuma" || t === "sem frente") return [];
+  const out: string[] = [];
+  if (/pasta|forrag/.test(t)) out.push("pastagens");
+  if (/grand|soja|milho|grao/.test(t)) out.push("grandes-culturas");
+  return out;
+}
+
+export function montarImportacao(
+  abas: Abas, idx: IndiceMunicipios, novoId: () => string, hoje: string, existentes: Existente[] = [],
+): Importacao {
   const rel: Relatorio = {
     semLocalizacao: [], localizacaoPelaCidade: [], documentoInvalido: [], documentoDuplicado: [],
-    criadosDoHistorico: [], naoEncontrados: [],
+    criadosDoHistorico: [], naoEncontrados: [], jaCadastrados: [],
   };
+  const nomesExistentes = new Set(existentes.map((e) => normalizar(e.nome)));
+  const docsExistentes = new Set(existentes.map((e) => e.documento).filter(Boolean) as string[]);
   const out: Importacao = { clientes: [], unidades: [], contatos: [], pedidos: [], vendas: [], relatorio: rel };
   const ids = new Map<string, string>();
   const docs = new Set<string>();
@@ -143,6 +164,11 @@ export function montarImportacao(abas: Abas, idx: IndiceMunicipios, novoId: () =
   for (const r of abas["Clientes"] ?? []) {
     const nome = txt(r["Cliente"]);
     if (!nome) continue;
+    const docLinha = somenteDigitos(txt(r["CNPJ/CPF"]) ?? "");
+    if (nomesExistentes.has(normalizar(nome)) || (docLinha && docsExistentes.has(docLinha))) {
+      rel.jaCadastrados.push(nome);
+      continue;
+    }
     const id = novoId();
     ids.set(normalizar(nome), id);
     nomes.add(nome);
@@ -182,12 +208,13 @@ export function montarImportacao(abas: Abas, idx: IndiceMunicipios, novoId: () =
 
     out.clientes.push({
       id, nome, razao_social: txt(r["Razão social"]), documento: doc, site: txt(r["Site"]), email: txt(r["E-mail"]),
+      telefone: txt(r["Telefone"]), cep: txt(r["CEP"]), frentes: lerFrentes(r["Frentes"]),
       endereco: txt(r["Endereço"]), cidade: mun?.nome ?? (cidade || null), uf: mun?.uf ?? uf,
       municipio_ibge: mun?.ibge ?? null, lat, lng, localizacao_precisao: precisao, status, etapa,
       motivo_perda: txt(r["Motivo (Perdidos)"]), porte: PORTE[normalizar(r["Porte"])] ?? null,
       equipamento: txt(r["Equipamento"]), potencial_ton_ano: num(r["Potencial estimado (ton/ano)"]),
       ritmo_ton_mes: num(r["Ritmo (Ton/Mês)"]), alerta_financeiro: txt(r["Alerta financeiro"]),
-      condicao_pagamento: txt(r["Condição de pagamento"]), observacoes: obs, origem,
+      condicao_pagamento: txt(r["Condição de pagamento"]), observacoes: obs, origem: txt(r["Origem"]) ?? origem,
       cadastrado_em: data(r["Cadastrado em"]) ?? hoje,
     });
 
@@ -217,7 +244,7 @@ export function montarImportacao(abas: Abas, idx: IndiceMunicipios, novoId: () =
     rel.criadosDoHistorico.push(nome);
     rel.semLocalizacao.push(nome);
     out.clientes.push({
-      id, nome, razao_social: null, documento: null, site: null, email: null, endereco: null, cidade: null, uf: null,
+      id, nome, razao_social: null, documento: null, site: null, email: null, telefone: null, cep: null, frentes: null, endereco: null, cidade: null, uf: null,
       municipio_ibge: null, lat: null, lng: null, localizacao_precisao: "exata", status: "carteira", etapa: "recorrente",
       motivo_perda: null, porte: null, equipamento: null, potencial_ton_ano: null, ritmo_ton_mes: null,
       alerta_financeiro: null, condicao_pagamento: null,
@@ -251,7 +278,7 @@ export function montarImportacao(abas: Abas, idx: IndiceMunicipios, novoId: () =
   for (const r of abas["Contatos"] ?? []) {
     const id = clienteId(r["Cliente"]);
     if (!id) { naoAchado(r["Cliente"]); continue; }
-    out.contatos.push({ cliente_id: id, nome: txt(r["Responsável"]), telefone: txt(r["Telefone"]) });
+    out.contatos.push({ cliente_id: id, nome: txt(r["Responsável"]), cargo: txt(r["Cargo"]), telefone: txt(r["Telefone"]), email: txt(r["E-mail"]) });
   }
 
   const anos: [number, string, string, string | null][] = [

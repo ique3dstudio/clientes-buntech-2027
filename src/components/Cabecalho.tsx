@@ -29,6 +29,9 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
               <Link href="/admin/territorios" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
                 Territórios
               </Link>
+              <Link href="/admin/enriquecer" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+                Completar dados
+              </Link>
               <Link href="/admin/importar" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
                 Importar
               </Link>

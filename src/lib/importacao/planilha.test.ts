@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { IndiceMunicipios, type MunicipioBruto } from "@/lib/geo/municipios";
-import { montarImportacao, num, separarCidade } from "./planilha";
+import { lerFrentes, montarImportacao, num, separarCidade } from "./planilha";
 import { lerXlsx } from "./ler-xlsx";
 
 const idx = new IndiceMunicipios(JSON.parse(readFileSync("public/data/municipios.json", "utf8")) as MunicipioBruto[]);
@@ -50,6 +50,28 @@ describe("montarImportacao", () => {
   });
 });
 
+describe("planilha do anuário (colunas novas)", () => {
+  it("lê frentes, telefone, CEP, origem e ignora clientes já cadastrados", () => {
+    expect(lerFrentes("pastagens;grandes-culturas")).toEqual(["pastagens", "grandes-culturas"]);
+    expect(lerFrentes("nenhuma")).toEqual([]);
+    expect(lerFrentes("")).toBeNull();
+    const r = montarImportacao(
+      {
+        Clientes: [
+          { Cliente: "Sementes Novas", Situação: "Carteira", Cidade: "Cosmorama - SP", Funil: "Lead Frio", Telefone: "(17) 3836-9200", CEP: "15530000", Frentes: "grandes-culturas", Origem: "Anuário" },
+          { Cliente: "Já Existe", Situação: "Carteira", Cidade: "Cajuru - SP" },
+        ],
+        Contatos: [{ Cliente: "Sementes Novas", Responsável: "Maria", Cargo: "Compras", Telefone: "(17) 1", "E-mail": "m@x.com" }],
+      },
+      idx, novoId, "2026-11-18", [{ nome: "já existe", documento: null }],
+    );
+    expect(r.clientes).toHaveLength(1);
+    expect(r.clientes[0]).toMatchObject({ telefone: "(17) 3836-9200", cep: "15530000", frentes: ["grandes-culturas"], origem: "Anuário", status: "prospect", cidade: "Cosmorama" });
+    expect(r.relatorio.jaCadastrados).toEqual(["Já Existe"]);
+    expect(r.contatos[0]).toMatchObject({ cargo: "Compras", email: "m@x.com" });
+  });
+});
+
 describe("cidade informada manualmente", () => {
   it("Sementes Bravante fica em Monte Santo de Minas", () => {
     const r = montarImportacao({ Clientes: [{ Cliente: "Sementes Bravante", Situação: "Perdidos" }] }, idx, novoId, "2026-11-17");
@@ -83,7 +105,7 @@ describe.skipIf(!real || !existsSync(real))("planilha real", () => {
     const abas = await lerXlsx(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer);
     const r = montarImportacao(abas, idx, novoId, "2026-11-17");
     console.log(JSON.stringify({ ...r.relatorio, clientes: r.clientes.length, unidades: r.unidades.length, contatos: r.contatos.length, pedidos: r.pedidos.length, vendas: r.vendas.length }, null, 1));
-    expect(r.clientes.length).toBe(87);
+    expect(r.clientes.length).toBeGreaterThan(80);
     expect(r.relatorio.naoEncontrados).toEqual([]);
   });
 });

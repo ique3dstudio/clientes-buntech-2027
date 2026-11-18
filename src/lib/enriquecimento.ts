@@ -1,5 +1,6 @@
 /** Funções puras para tratar resultados de pesquisa na internet (usadas por /api/enriquecer). */
 import { normalizar } from "@/lib/texto";
+import { documentoValido, somenteDigitos } from "@/lib/documento";
 
 const DIRETORIOS = [
   "cnpj.biz", "cnpja.com", "cnpj.info", "econodata", "casadosdados", "empresascnpj", "consultasocio", "cnpj.services", "informecadastral",
@@ -63,4 +64,23 @@ export function formatarTelefone(valor: string): string {
   if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
   if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
   return valor;
+}
+
+/** CNPJs (formato 00.000.000/0000-00) encontrados num texto, já validados pelo dígito verificador. */
+export function extrairCnpjs(texto: string): string[] {
+  const achados = texto.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g) ?? [];
+  return [...new Set(achados.map(somenteDigitos).filter((d) => d.length === 14 && documentoValido(d)))];
+}
+
+const GENERICAS = new Set("sementes semente seeds seed ltda eireli epp me sa s a de da do dos das e comercio industria com ind imp exp importacao exportacao producao agropecuaria agroindustrial cooperativa agricola brasil grupo cia ltd".split(" "));
+const palavras = (s: string) => normalizar(s).split(" ").filter((p) => p.length > 1 && !GENERICAS.has(p));
+
+/** 0..1: quanto das palavras-chave do nome procurado aparece no nome encontrado. */
+export function similaridade(procurado: string, encontrado: string): number {
+  const a = new Set(palavras(procurado));
+  const b = new Set(palavras(encontrado));
+  if (!a.size || !b.size) return 0;
+  let comum = 0;
+  for (const p of a) if (b.has(p)) comum++;
+  return comum / Math.min(a.size, b.size);
 }

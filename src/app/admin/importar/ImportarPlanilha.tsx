@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { carregarMunicipios } from "@/lib/geo/municipios";
 import { lerXlsx } from "@/lib/importacao/ler-xlsx";
-import { montarImportacao, type Importacao } from "@/lib/importacao/planilha";
+import { montarImportacao, type Existente, type Importacao } from "@/lib/importacao/planilha";
 
 type Fase = "inicio" | "lendo" | "previa" | "gravando" | "ok" | "erro";
 
@@ -27,7 +27,14 @@ export function ImportarPlanilha() {
     try {
       const [abas, idx] = await Promise.all([arquivo.arrayBuffer().then(lerXlsx), carregarMunicipios()]);
       if (!abas["Clientes"]) throw new Error('A planilha precisa ter a aba "Clientes".');
-      setImp(montarImportacao(abas, idx, () => crypto.randomUUID(), new Date().toISOString().slice(0, 10)));
+      // clientes que já existem no banco são ignorados (evita duplicar ao importar duas vezes)
+      const existentes: Existente[] = [];
+      for (let de = 0; ; de += 1000) {
+        const { data } = await createClient().from("clientes").select("nome, documento").order("id").range(de, de + 999);
+        existentes.push(...((data ?? []) as Existente[]));
+        if (!data || data.length < 1000) break;
+      }
+      setImp(montarImportacao(abas, idx, () => crypto.randomUUID(), new Date().toISOString().slice(0, 10), existentes));
       setFase("previa");
     } catch (err) {
       setMensagem(err instanceof Error ? err.message : String(err));
@@ -55,7 +62,8 @@ export function ImportarPlanilha() {
 
       setProgresso("Gravando clientes…");
       for (const l of lotes(imp.clientes)) {
-        const linhas = l.map(({ lat, lng, etapa, motivo_perda, ...c }) => ({
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const linhas = l.map(({ lat, lng, etapa, motivo_perda, frentes: _f, ...c }) => ({
           ...c,
           etapa_id: etapa ? etapaId.get(etapa) ?? null : null,
           motivo_perda_id: motivo_perda ? motivoId.get(motivo_perda) ?? null : null,
@@ -73,13 +81,19 @@ export function ImportarPlanilha() {
         falha("Vendas", (await supabase.from("vendas_anuais").insert(l.map((v) => ({ ...v, produto_id: v.produto_nome ? produtoId.get(v.produto_nome) ?? null : null })))).error);
 
       setProgresso("Definindo frentes…");
-      for (const c of imp.clientes) falha("Frentes", (await supabase.rpc("sugerir_frentes", { cid: c.id })).error);
-      const { data: pastagens } = await supabase.from("frentes").select("id").eq("slug", "pastagens").single();
-      const { data: comFrente } = await supabase.from("cliente_frentes").select("cliente_id").in("cliente_id", imp.clientes.map((c) => c.id));
+      const { data: listaFrentes } = await supabase.from("frentes").select("id, slug");
+      const frenteId = new Map((listaFrentes ?? []).map((x) => [x.slug, x.id]));
+      // frentes informadas na planilha (coluna "Frentes") valem como definidas à mão
+      const explicitas = imp.clientes.filter((c) => c.frentes !== null);
+      const linhasFrentes = explicitas.flatMap((c) => (c.frentes ?? []).map((slug) => ({ cliente_id: c.id, frente_id: frenteId.get(slug)!, manual: true })));
+      for (const l of lotes(linhasFrentes)) falha("Frentes", (await supabase.from("cliente_frentes").insert(l)).error);
+      // as demais: deduzidas pelos produtos comprados; sem compras → Pastagens (carteira atual)
+      const deduzir = imp.clientes.filter((c) => c.frentes === null);
+      for (const c of deduzir) falha("Frentes", (await supabase.rpc("sugerir_frentes", { cid: c.id })).error);
+      const { data: comFrente } = await supabase.from("cliente_frentes").select("cliente_id").in("cliente_id", deduzir.map((c) => c.id));
       const tem = new Set((comFrente ?? []).map((x) => x.cliente_id));
-      const semFrente = imp.clientes.filter((c) => !tem.has(c.id));
-      for (const l of lotes(semFrente))
-        falha("Frentes", (await supabase.from("cliente_frentes").insert(l.map((c) => ({ cliente_id: c.id, frente_id: pastagens!.id, manual: true })))).error);
+      for (const l of lotes(deduzir.filter((c) => !tem.has(c.id))))
+        falha("Frentes", (await supabase.from("cliente_frentes").insert(l.map((c) => ({ cliente_id: c.id, frente_id: frenteId.get("pastagens")!, manual: true })))).error);
 
       setFase("ok");
     } catch (err) {
@@ -135,6 +149,7 @@ export function ImportarPlanilha() {
           <Aviso titulo="CNPJ/CPF inválido (ignorado)" itens={imp.relatorio.documentoInvalido} />
           <Aviso titulo="Criados a partir do histórico de vendas" itens={imp.relatorio.criadosDoHistorico} />
           <Aviso titulo="Linhas de outras abas sem cliente correspondente" itens={imp.relatorio.naoEncontrados} forte />
+          <Aviso titulo="Já cadastrados — ignorados nesta importação" itens={imp.relatorio.jaCadastrados} />
 
           <div className="flex gap-3">
             <button onClick={gravar} className="rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-brand-blue-dark">
