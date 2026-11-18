@@ -11,6 +11,8 @@ import {
   COR_FRENTE, COR_STATUS, ROTULO_STATUS, corDaFrente, mesesSemComprar, type ClienteMapa,
 } from "@/lib/clientes";
 
+type Territorio = { id: string; nome: string; cor: string; vendedor: string | null; vendedor_id: string | null; geometria: GeoJSON.MultiPolygon; rotulo: GeoJSON.Point };
+
 type Ficha = {
   id: string;
   contatos: { nome: string | null; telefone: string | null }[];
@@ -31,6 +33,9 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
   const [busca, setBusca] = useState("");
   const [frentes, setFrentes] = useState<Record<string, boolean>>({ pastagens: true, "grandes-culturas": true, nenhuma: true });
   const [status, setStatus] = useState<Record<string, boolean>>({ carteira: true, prospect: true, perdido: false });
+  const [territorios, setTerritorios] = useState<Territorio[]>([]);
+  const [mostrarTerritorios, setMostrarTerritorios] = useState(true);
+  const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [fichaCarregada, setFicha] = useState<Ficha | null>(null);
   const ficha = fichaCarregada?.id === selecionadoId ? fichaCarregada : null;
 
@@ -47,6 +52,8 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
         if (data.length < 1000) break;
       }
       if (vivo) setClientes(todos);
+      const { data: terr } = await supabase.from("territorios_geojson").select("id, nome, cor, vendedor, vendedor_id, geometria, rotulo").order("ordem");
+      if (vivo && terr) setTerritorios(terr as unknown as Territorio[]);
     })();
     return () => { vivo = false; };
   }, []);
@@ -56,12 +63,13 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
     return clientes.filter((c) => {
       if (c.lat == null || c.lng == null) return false;
       if (!status[c.status]) return false;
+      if (vendedorFiltro && c.vendedor_id !== vendedorFiltro) return false;
       const chaves = c.frentes.length ? c.frentes : ["nenhuma"];
       if (!chaves.some((f) => frentes[f])) return false;
       if (t && !normalizar(`${c.nome} ${c.cidade ?? ""} ${c.documento ?? ""} ${c.razao_social ?? ""}`).includes(t)) return false;
       return true;
     });
-  }, [clientes, busca, frentes, status]);
+  }, [clientes, busca, frentes, status, vendedorFiltro]);
 
   const semLocal = clientes.filter((c) => c.lat == null).length;
   const selecionado = clientes.find((c) => c.id === selecionadoId) ?? null;
@@ -86,6 +94,17 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
         if (!/(AJAXError|Failed to fetch|NetworkError|Load failed)/i.test(msg)) setAvisoMapa(`Mapa: ${msg}`);
       });
       m.on("load", () => {
+        m.addSource("territorios", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+        m.addSource("territorios-rotulos", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+        m.addLayer({ id: "territorios-fundo", type: "fill", source: "territorios", paint: { "fill-color": ["get", "cor"], "fill-opacity": 0.09 } });
+        m.addLayer({ id: "territorios-borda-base", type: "line", source: "territorios", paint: { "line-color": "#ffffff", "line-width": 5, "line-opacity": 0.7 } });
+        m.addLayer({ id: "territorios-borda", type: "line", source: "territorios", layout: { "line-cap": "butt", "line-join": "round" },
+          paint: { "line-color": ["get", "cor"], "line-width": 3, "line-dasharray": [3, 2] } });
+        if (m.getStyle().glyphs) {
+          m.addLayer({ id: "territorios-rotulos", type: "symbol", source: "territorios-rotulos",
+            layout: { "text-field": ["get", "rotulo"], "text-size": 13, "text-font": ["Noto Sans Bold"], "text-max-width": 9 },
+            paint: { "text-color": ["get", "cor"], "text-halo-color": "#ffffff", "text-halo-width": 2 } });
+        }
         m.addSource("clientes", { type: "geojson", data: { type: "FeatureCollection", features: [] }, cluster: true, clusterRadius: 45, clusterMaxZoom: 11 });
         m.addLayer({ id: "grupos", type: "circle", source: "clientes", filter: ["has", "point_count"], paint: {
           "circle-color": "#0891d1", "circle-opacity": 0.85, "circle-stroke-width": 3, "circle-stroke-color": "#ffffff",
@@ -136,6 +155,28 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
       })),
     });
   }, [mapaPronto, visiveis]);
+
+  // 3b) territórios no mapa
+  useEffect(() => {
+    const m = mapaPronto;
+    if (!m || !m.getSource("territorios")) return;
+    (m.getSource("territorios") as GeoJSONSource).setData({
+      type: "FeatureCollection",
+      features: territorios.map((t) => ({ type: "Feature" as const, geometry: t.geometria, properties: { id: t.id, cor: t.cor, nome: t.nome } })),
+    });
+    (m.getSource("territorios-rotulos") as GeoJSONSource).setData({
+      type: "FeatureCollection",
+      features: territorios.map((t) => ({ type: "Feature" as const, geometry: t.rotulo, properties: { cor: t.cor, rotulo: `${t.nome}\n${t.vendedor ?? "Sem vendedor"}` } })),
+    });
+  }, [mapaPronto, territorios]);
+
+  useEffect(() => {
+    const m = mapaPronto;
+    if (!m) return;
+    for (const id of ["territorios-fundo", "territorios-borda-base", "territorios-borda", "territorios-rotulos"]) {
+      if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", mostrarTerritorios ? "visible" : "none");
+    }
+  }, [mapaPronto, mostrarTerritorios]);
 
   // 4) seleção + ficha
   useEffect(() => {
@@ -188,6 +229,16 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
               </label>
             ))}
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+            <label className="flex cursor-pointer items-center gap-2 text-slate-700">
+              <input type="checkbox" className="size-4 accent-brand-blue" checked={mostrarTerritorios} onChange={(e) => setMostrarTerritorios(e.target.checked)} />
+              Territórios
+            </label>
+            <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs">
+              <option value="">Todos os vendedores</option>
+              {territorios.filter((t) => t.vendedor_id).map((t) => <option key={t.id} value={t.vendedor_id!}>{t.vendedor}</option>)}
+            </select>
+          </div>
           {podeEditar && (
             <Link href="/clientes/novo" className="mt-3 block rounded-lg bg-brand-blue px-3 py-2 text-center text-sm font-semibold text-white hover:bg-brand-blue-dark">
               + Novo cliente
@@ -208,6 +259,16 @@ export function MapaClientes({ podeEditar }: { podeEditar: boolean }) {
       <div className="pointer-events-none absolute bottom-6 left-3 z-10 hidden rounded-xl bg-white/95 p-3 text-xs shadow-lg ring-1 ring-slate-200 sm:block">
         <p className="font-semibold text-slate-700">Cor = frente · Borda = situação</p>
         <p className="mt-1 text-slate-500">Ponto claro = localizado só pela cidade</p>
+        {territorios.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {territorios.map((t) => (
+              <li key={t.id} className="flex items-center gap-2">
+                <span className="inline-block w-6 border-t-[3px] border-dashed" style={{ borderColor: t.cor }} />
+                <span>{t.nome} · {t.vendedor ?? "sem vendedor"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Ficha */}

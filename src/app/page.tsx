@@ -19,8 +19,11 @@ type Territorio = {
   id: string;
   nome: string;
   cor: string;
-  vendedores: { nome: string; externo: boolean } | null;
-  territorio_areas: { tipo: string; uf: string; nome: string }[];
+  vendedor: string | null;
+  externo: boolean | null;
+  municipios: number;
+  ufs: string[] | null;
+  clientes: number;
 };
 
 async function Inicio() {
@@ -30,8 +33,8 @@ async function Inicio() {
   const supabase = await createClient();
   const [{ data: territorios }, { count: totalClientes }] = await Promise.all([
     supabase
-      .from("territorios")
-      .select("id, nome, cor, vendedores(nome, externo), territorio_areas(tipo, uf, nome)")
+      .from("territorios_resumo")
+      .select("id, nome, cor, vendedor, externo, municipios, ufs, clientes")
       .order("ordem")
       .returns<Territorio[]>(),
     supabase.from("clientes").select("id", { count: "exact", head: true }),
@@ -59,7 +62,7 @@ async function Inicio() {
 
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Territórios</h2>
-          <p className="text-sm text-slate-500">A linha tracejada de cada território aparecerá no mapa com a cor abaixo.</p>
+          <p className="text-sm text-slate-500">A linha tracejada de cada território aparece no mapa com a cor abaixo.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {territorios?.map((t) => (
               <article
@@ -72,10 +75,10 @@ async function Inicio() {
                   <span className="size-3 shrink-0 rounded-full" style={{ background: t.cor }} />
                 </div>
                 <p className="mt-1 text-sm">
-                  {t.vendedores ? (
+                  {t.vendedor ? (
                     <>
-                      {t.vendedores.nome}
-                      {t.vendedores.externo && (
+                      {t.vendedor}
+                      {t.externo && (
                         <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">externo</span>
                       )}
                     </>
@@ -84,8 +87,9 @@ async function Inicio() {
                   )}
                 </p>
                 <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                  {resumoAreas(t.territorio_areas)}
+                  {(t.ufs ?? []).join(", ")} · {t.municipios} municípios
                 </p>
+                <p className="mt-1 text-sm font-medium text-slate-700">{t.clientes} {t.clientes === 1 ? "cliente" : "clientes"}</p>
               </article>
             ))}
           </div>
@@ -104,13 +108,4 @@ async function Inicio() {
       </main>
     </>
   );
-}
-
-function resumoAreas(areas: Territorio["territorio_areas"]) {
-  const ufsInteiras = areas.filter((a) => a.tipo === "uf").map((a) => a.uf);
-  const parciais = [...new Set(areas.filter((a) => a.tipo !== "uf").map((a) => a.uf))];
-  const partes = [];
-  if (ufsInteiras.length) partes.push(ufsInteiras.join(", "));
-  if (parciais.length) partes.push(parciais.map((uf) => `parte de ${uf}`).join(", "));
-  return partes.join(" + ");
 }

@@ -180,7 +180,8 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 | Fase | Situação |
 |---|---|
 | 0 — Fundação | ✅ Concluída — no ar em https://clientes-buntech-2027.vercel.app (app Next.js, Supabase com RLS, login, perfis, CI) |
-| 1 — Mapa + Clientes | 🚧 Quase pronta: mapa, filtros, ficha, importação (87 clientes carregados) e cadastro/edição de cliente com busca de CNPJ e ponto arrastável. Falta validar em uso e a ficha completa (histórico/vendas) |
+| 1 — Mapa + Clientes | ✅ Mapa, filtros, ficha, importação (87 clientes) e cadastro/edição com busca de CNPJ e ponto arrastável. Pendente: ficha completa (histórico/vendas) |
+| 2 — Territórios | 🚧 Contornos tracejados no mapa, atribuição automática de vendedor, tela Territórios (mover áreas) prontos; falta validar visualmente e ajustar a divisa do Paraná |
 
 ---
 
@@ -277,12 +278,19 @@ Fora dos 5 territórios (Norte, Nordeste exceto BA, TO, ES, RJ) = **área livre*
 - Vermelho (Gustavo): São José do Rio Preto, Ribeirão Preto (Franca), **Campinas**, Vale do Paraíba Paulista (S. J. dos Campos, Taubaté).
 - Laranja (João Rafael): Araçatuba, Presidente Prudente, Marília, Assis, Bauru, Araraquara, Piracicaba, Itapetininga, Macro Metropolitana, Metropolitana de São Paulo, Litoral Sul.
 
-**Paraná** — linha diagonal (transversal) partindo de Maringá: **de Maringá para baixo = Roxo**, sem ilhas.
+**Paraná** — **de Maringá para baixo = Roxo**, sem ilhas. *Implementação atual:* todo município cujo ponto central está no paralelo de Maringá ou ao sul dele vai para o Roxo (inclui Curitiba e Ponta Grossa); ao norte fica com o João Rafael. A linha pode ser inclinada ajustando municípios na tela Territórios.
 - Laranja (João Rafael): Noroeste (Paranavaí), Norte Central **exceto Maringá** (Londrina, Apucarana, Arapongas…), Norte Pioneiro, Centro Oriental (Ponta Grossa), Metropolitana de Curitiba.
 - Roxo (vago): **Maringá e região**, Centro Ocidental (Campo Mourão, Goioerê), Oeste (Cascavel, Foz do Iguaçu), Sudoeste, Centro-Sul (Guarapuava), Sudeste.
 - Regra: o Roxo precisa ser **uma área contínua**. Na Fase 2 a divisa será ajustada **município a município** ao longo dessa diagonal para ligar Maringá ao resto do Roxo, e o resultado é validado no mapa antes de valer.
 
 Depois de pronto, qualquer município pode ser movido de território pelo editor (com histórico).
+
+### 11.1b Como os territórios são calculados (implementado)
+- Base: malha municipal do IBGE (tabela `municipios_ibge`, 3.569 municípios dos 10 estados), carregada direto no banco a partir de GeoJSON público (tbrugz/geodata-br) e da API de localidades do IBGE (micro/mesorregião).
+- Cada município tem um `territorio_id`. O contorno do território (`territorios.geom`) é a união dos seus municípios, simplificada (~1 km), sem buracos nem ilhotas minúsculas.
+- Cliente → território/vendedor: pelo município onde o ponto cai. Vendedor definido à mão no cadastro não é sobrescrito.
+- Ajustes: tela **Territórios** (admin) move mesorregiões, microrregiões ou municípios e recalcula tudo.
+- Funções de carga (`privado.carregar_geometrias_uf`, `privado.carregar_hierarquia_uf`, `privado.atribuir_municipios_padrao`, `privado.recalcular_contornos`) ficam em `supabase/migrations/`.
 
 ### 11.2 Território vago
 - O território Roxo nasce **sem vendedor**: clientes ficam visíveis para gestão/admin e podem ser atribuídos a um vendedor provisório.
