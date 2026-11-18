@@ -185,6 +185,7 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 | 2 — Territórios | 🚧 Contornos tracejados no mapa, atribuição automática de vendedor, tela Territórios (mover áreas) prontos; falta validar visualmente e ajustar a divisa do Paraná |
 | 3 — Prospecção | ✅ Funil em quadro (arrastar), tarefas/agenda do dia, check-in de visita com GPS, "perto de mim" e planejador de rota (Google Maps/Waze). Pendente: lembrete offline (Fase 6) |
 | 4 — Dados em massa | ✅ Concluída: importação de planilha, Anuário ABRASEM (378), UNIPASTO (44), **RENASEM/MAPA** (3.533 registros de 10 estados; 553 beneficiadores de sementes novos + CNPJ confirmado em 155 clientes), busca de CNPJ/site/e-mail na internet e **exportação Excel/CSV** |
+| 5 — Painéis e relatórios | ✅ **Painel** (`/painel`): cadastros por situação, funil, faturamento por ano, cobertura por território (% de ativos visitados), maiores clientes, atividade por vendedor (30 dias), clientes em risco (6+ meses sem comprar) e tarefas atrasadas. **Relatório mensal** (`/relatorio`): mesma visão em formato de impressão, com botão "Salvar PDF" |
 
 ---
 

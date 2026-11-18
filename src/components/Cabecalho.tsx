@@ -27,6 +27,9 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           <Link href="/funil" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
             Funil
           </Link>
+          <Link href="/painel" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+            Painel
+          </Link>
           <Link href="/tarefas" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
             Tarefas
           </Link>
