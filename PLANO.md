@@ -182,8 +182,9 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 |---|---|
 | 0 — Fundação | ✅ Concluída — no ar em https://clientes-buntech-2027.vercel.app (app Next.js, Supabase com RLS, login, perfis, CI) |
 | 1 — Mapa + Clientes | ✅ **Concluída.** Mapa, filtros, ficha, importação (87 clientes) e cadastro/edição com busca de CNPJ e ponto arrastável. Ficha completa do cliente (indicadores, vendas por ano/produto, pedidos, contatos, TOTVS, histórico de contatos) |
-| 3 — Prospecção | ✅ Funil em quadro (arrastar), tarefas/agenda do dia, check-in de visita com GPS, "perto de mim" e planejador de rota (Google Maps/Waze). Pendente: lembrete offline (Fase 6) |
 | 2 — Territórios | 🚧 Contornos tracejados no mapa, atribuição automática de vendedor, tela Territórios (mover áreas) prontos; falta validar visualmente e ajustar a divisa do Paraná |
+| 3 — Prospecção | ✅ Funil em quadro (arrastar), tarefas/agenda do dia, check-in de visita com GPS, "perto de mim" e planejador de rota (Google Maps/Waze). Pendente: lembrete offline (Fase 6) |
+| 4 — Dados em massa | 🚧 Quase pronta: importação de planilha (com detecção de duplicados), Anuário ABRASEM (378 empresas) e UNIPASTO (44 associados) carregados, busca de CNPJ na Receita, tela Completar dados (CNPJ/site/e-mail/telefone/posição pela internet). Falta: exportar para Excel/CSV e fonte RENASEM/CNAE |
 
 ---
 
