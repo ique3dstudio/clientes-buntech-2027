@@ -24,6 +24,15 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           <Link href="/mapa" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
             Mapa
           </Link>
+          <Link href="/funil" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+            Funil
+          </Link>
+          <Link href="/tarefas" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+            Tarefas
+          </Link>
+          <Link href="/rotas" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+            Rotas
+          </Link>
           {usuario.papel === "admin" && (
             <>
               <Link href="/admin/territorios" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">

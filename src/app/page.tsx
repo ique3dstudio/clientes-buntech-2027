@@ -31,13 +31,15 @@ async function Inicio() {
   if (usuario.papel === "pendente") return <AguardandoAprovacao nome={usuario.nome} />;
 
   const supabase = await createClient();
-  const [{ data: territorios }, { count: totalClientes }] = await Promise.all([
+  const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" }); // AAAA-MM-DD no horário de Brasília
+  const [{ data: territorios }, { count: totalClientes }, { count: tarefasHoje }] = await Promise.all([
     supabase
       .from("territorios_resumo")
       .select("id, nome, cor, vendedor, externo, municipios, ufs, clientes")
       .order("ordem")
       .returns<Territorio[]>(),
     supabase.from("clientes").select("id", { count: "exact", head: true }),
+    supabase.from("tarefas").select("id", { count: "exact", head: true }).eq("responsavel_id", usuario.id).is("concluida_em", null).lte("vencimento", hoje),
   ]);
 
   return (
@@ -94,6 +96,21 @@ async function Inicio() {
             ))}
           </div>
         </section>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <Link href="/tarefas" className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 hover:ring-brand-blue">
+            <p className="text-3xl font-semibold text-brand-blue">{tarefasHoje ?? 0}</p>
+            <p className="text-sm text-slate-600">tarefas para hoje ou atrasadas</p>
+          </Link>
+          <Link href="/funil" className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 hover:ring-brand-blue">
+            <p className="font-semibold">Funil de vendas</p>
+            <p className="text-sm text-slate-600">Arraste os clientes entre as etapas</p>
+          </Link>
+          <Link href="/rotas" className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 hover:ring-brand-blue">
+            <p className="font-semibold">Perto de mim</p>
+            <p className="text-sm text-slate-600">Monte a rota de visitas do dia</p>
+          </Link>
+        </div>
 
         <Link
           href="/mapa"

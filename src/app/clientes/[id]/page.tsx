@@ -12,6 +12,7 @@ import { brl, dataBr, dataHoraBr, linkWhatsapp, toneladas } from "@/lib/formato"
 import { formatarDocumento } from "@/lib/documento";
 import { resumoPorAno, resumoPorProduto, type Pedido, type VendaAnual } from "@/lib/vendas";
 import { NovaInteracao } from "./NovaInteracao";
+import { CheckinVisita } from "./CheckinVisita";
 
 export const metadata: Metadata = { title: "Ficha do cliente" };
 
@@ -48,6 +49,7 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
     supabase.from("vendas_anuais").select("ano, periodo, produto_nome, quantidade, faturamento").eq("cliente_id", id),
     supabase.from("interacoes").select("id, tipo, data, descricao, autor_nome").eq("cliente_id", id).order("data", { ascending: false }).limit(50),
   ]);
+  const { data: tarefasAbertas } = await supabase.from("tarefas").select("id, titulo, vencimento").eq("cliente_id", id).is("concluida_em", null).order("vencimento");
 
   const pedidos = (pd.data ?? []) as Pedido[];
   const vendas = (vd.data ?? []) as VendaAnual[];
@@ -76,7 +78,8 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
               {c.razao_social && <p className="text-sm text-slate-500">{c.razao_social}</p>}
               <p className="mt-1 text-sm text-slate-600">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "Local não informado"}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-start gap-2">
+              {podeEditar && <CheckinVisita clienteId={id} autor={usuario.nome} lat={mapa.data?.lat ?? null} lng={mapa.data?.lng ?? null} />}
               {mapa.data?.lat != null && (
                 <Link href={`/mapa?c=${id}`} className="rounded-lg px-3 py-2 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">Ver no mapa</Link>
               )}
@@ -190,6 +193,15 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
           </div>
 
           <div className="space-y-6">
+            {(tarefasAbertas ?? []).length > 0 && (
+              <Cartao titulo="Tarefas em aberto">
+                <ul className="space-y-1.5 text-sm">
+                  {(tarefasAbertas ?? []).map((t) => <li key={t.id}>{t.titulo}{t.vencimento && <span className="text-slate-500"> · {dataBr(t.vencimento)}</span>}</li>)}
+                </ul>
+                <Link href="/tarefas" className="mt-2 inline-block text-xs text-brand-blue hover:underline">Ver todas</Link>
+              </Cartao>
+            )}
+
             <Cartao titulo="Contatos">
               {(ct.data ?? []).length === 0 ? <Vazio texto="Nenhum contato cadastrado." /> : (
                 <ul className="space-y-3 text-sm">
