@@ -20,7 +20,7 @@ async function Conteudo() {
   const usuario = await getUsuario();
   if (usuario.papel === "pendente") return <AguardandoAprovacao nome={usuario.nome} />;
   return (
-    <div className="flex h-screen flex-col">
+    <div className="tela-cheia flex flex-col">
       <Cabecalho usuario={usuario} />
       <FunilKanban podeEditar={usuario.papel !== "leitura"} />
     </div>

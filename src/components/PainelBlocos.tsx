@@ -5,9 +5,9 @@ export const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency
 
 export function Kpi({ rotulo, valor, detalhe }: { rotulo: string; valor: string | number; detalhe?: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{rotulo}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900">{valor}</p>
+      <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-slate-900">{valor}</p>
       {detalhe && <p className="mt-0.5 text-xs text-slate-500">{detalhe}</p>}
     </div>
   );
@@ -15,7 +15,7 @@ export function Kpi({ rotulo, valor, detalhe }: { rotulo: string; valor: string 
 
 export function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="break-inside-avoid rounded-xl border border-slate-200 bg-white p-4">
+    <section className="min-w-0 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-4">
       <h2 className="mb-3 text-sm font-semibold text-slate-900">{titulo}</h2>
       {children}
     </section>
@@ -138,30 +138,30 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
           {d.atividade.length === 0 ? (
             <p className="text-sm text-slate-500">Nenhum contato registrado no período.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                   <th className="py-2">Pessoa</th>
-                  <th className="text-right">Visitas</th>
-                  <th className="text-right">Ligações</th>
-                  <th className="text-right">Mensagens</th>
-                  <th className="text-right">Reuniões</th>
-                  <th className="text-right">Total</th>
+                  <th className="whitespace-nowrap pl-4 text-right">Visitas</th>
+                  <th className="whitespace-nowrap pl-4 text-right">Ligações</th>
+                  <th className="whitespace-nowrap pl-4 text-right">Mensagens</th>
+                  <th className="whitespace-nowrap pl-4 text-right">Reuniões</th>
+                  <th className="whitespace-nowrap pl-4 text-right">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {d.atividade.map((a) => (
                   <tr key={a.quem} className="border-b border-slate-100 last:border-0">
                     <td className="py-2">{a.quem}</td>
-                    <td className="text-right tabular-nums">{a.visitas}</td>
-                    <td className="text-right tabular-nums">{a.ligacoes}</td>
-                    <td className="text-right tabular-nums">{a.mensagens}</td>
-                    <td className="text-right tabular-nums">{a.reunioes}</td>
-                    <td className="text-right font-medium tabular-nums">{a.total}</td>
+                    <td className="pl-4 text-right tabular-nums">{a.visitas}</td>
+                    <td className="pl-4 text-right tabular-nums">{a.ligacoes}</td>
+                    <td className="pl-4 text-right tabular-nums">{a.mensagens}</td>
+                    <td className="pl-4 text-right tabular-nums">{a.reunioes}</td>
+                    <td className="pl-4 text-right font-medium tabular-nums">{a.total}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </Secao>
       </div>

@@ -3,7 +3,7 @@ import { Logo } from "@/components/Logo";
 
 export function AguardandoAprovacao({ nome }: { nome: string }) {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6 text-center">
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-6 text-center">
       <Logo className="h-auto w-full max-w-md" />
       <h1 className="mt-10 text-2xl font-semibold">Olá, {nome}!</h1>
       <p className="mt-2 max-w-md text-slate-600">

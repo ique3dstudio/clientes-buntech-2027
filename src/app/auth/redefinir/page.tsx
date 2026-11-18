@@ -23,7 +23,7 @@ export default function RedefinirSenha() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6">
+    <main className="flex min-h-dvh items-center justify-center px-6">
       <form onSubmit={salvar} className="w-full max-w-sm space-y-4">
         <Logo className="mx-auto h-auto w-56" />
         <h1 className="pt-4 text-xl font-semibold">Criar nova senha</h1>

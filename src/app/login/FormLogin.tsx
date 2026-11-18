@@ -99,8 +99,8 @@ export function FormLogin() {
     "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30";
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{TITULO[modo]}</h1>
+    <div className="w-full">
+      <h1 className="text-3xl text-slate-900">{TITULO[modo]}</h1>
       <p className="mt-1 text-sm text-slate-500">
         {modo === "cadastrar"
           ? "Após o cadastro, um administrador libera o seu acesso."
@@ -141,7 +141,7 @@ export function FormLogin() {
         )}
 
         {modo === "entrar" && (
-          <div className="flex items-center justify-between gap-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm">
             <label className="flex cursor-pointer select-none items-center gap-2 text-slate-700">
               <input
                 type="checkbox"

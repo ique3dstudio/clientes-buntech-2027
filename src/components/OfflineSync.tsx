@@ -47,7 +47,7 @@ export function OfflineSync() {
 
   if (online && !pendentes && !msg) return null;
   return (
-    <div role="status" className={`fixed inset-x-0 bottom-0 z-50 px-4 py-2 text-center text-sm font-medium print:hidden ${online ? "bg-emerald-600 text-white" : "bg-amber-500 text-amber-950"}`}>
+    <div role="status" className={`fixed inset-x-0 bottom-[calc(var(--nav-b)+env(safe-area-inset-bottom))] z-40 px-4 py-2 text-center text-sm font-medium print:hidden ${online ? "bg-emerald-600 text-white" : "bg-amber-500 text-amber-950"}`}>
       {!online
         ? `Sem sinal — o app continua funcionando. ${pendentes ? `${pendentes} registro(s) aguardando envio.` : ""} `
         : pendentes

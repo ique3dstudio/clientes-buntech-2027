@@ -21,7 +21,7 @@ async function Mapa({ searchParams }: { searchParams: PageProps<"/mapa">["search
   const usuario = await getUsuario();
   if (usuario.papel === "pendente") return <AguardandoAprovacao nome={usuario.nome} />;
   return (
-    <div className="flex h-screen flex-col">
+    <div className="tela-cheia flex flex-col">
       <Cabecalho usuario={usuario} />
       <MapaClientes podeEditar={usuario.papel !== "leitura"} selecionadoInicial={typeof c === "string" ? c : undefined} />
     </div>
