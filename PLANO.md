@@ -187,6 +187,17 @@ Meta: Fases 0–2 formam um MVP já útil (mapa + clientes + territórios). Fase
 | 4 — Dados em massa | ✅ Concluída: importação de planilha, Anuário ABRASEM (378), UNIPASTO (44), **RENASEM/MAPA** (3.533 registros de 10 estados; 553 beneficiadores de sementes novos + CNPJ confirmado em 155 clientes), busca de CNPJ/site/e-mail na internet e **exportação Excel/CSV** |
 | 5 — Painéis e relatórios | ✅ **Painel** (`/painel`): cadastros por situação, funil, faturamento por ano, cobertura por território (% de ativos visitados), maiores clientes, atividade por vendedor (30 dias), clientes em risco (6+ meses sem comprar) e tarefas atrasadas. **Relatório mensal** (`/relatorio`): mesma visão em formato de impressão, com botão "Salvar PDF" |
 | 6 — Campo/PWA | ✅ **Modo offline**: service worker (app abre sem sinal), cópia local dos clientes (atualizada a cada 6 h, apagada ao sair da conta), tela `/offline` com busca, "perto de mim" e registro de contato; **fila de registros** (visitas/contatos/GPS/foto/retorno) enviada sozinha ao voltar o sinal, sem duplicar. **Fotos de visita** (bucket privado `visitas`, reduzidas a 1600 px). Aviso de conexão na base da tela. Fora do offline: mapa e ficha completa continuam exigindo internet |
+| 7 — Go-live | ✅ Guia de treinamento no app (`/ajuda`), revisão de segurança do banco (RLS ok; as 2 funções administrativas expostas checam `eh_admin()` internamente) e checklist de lançamento abaixo |
+
+### Checklist de lançamento (Fase 7)
+- [ ] Ativar "Leaked password protection" no Supabase (Authentication → Passwords; exige plano Pro).
+- [ ] Convidar a equipe: cada pessoa cria conta em /login; o admin aprova em Usuários e define perfil + vendedor (Larissa, Gustavo, João Rafael, Edson = externo).
+- [ ] Definir vendedor do território Sul (hoje sem responsável).
+- [ ] Rodar "Completar dados" e revisar CNPJ/site/e-mail sugeridos.
+- [ ] Validar contornos dos territórios e a linha do PR (Maringá) no mapa.
+- [ ] Corrigir pinos aproximados / clientes sem localização.
+- [ ] Treinamento de 30 min usando /ajuda; cada vendedor instala o app na tela inicial e testa o modo offline.
+- [ ] Domínio próprio (opcional) na Vercel e backup periódico (Supabase Pro faz backup diário).
 
 ---
 

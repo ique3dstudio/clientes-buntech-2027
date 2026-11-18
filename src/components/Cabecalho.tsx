@@ -36,6 +36,9 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           <Link href="/rotas" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
             Rotas
           </Link>
+          <Link href="/ajuda" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
+            Ajuda
+          </Link>
           {["admin", "gerente", "vendedor"].includes(usuario.papel) && (
             <Link href="/exportar" className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-slate-900">
               Exportar
