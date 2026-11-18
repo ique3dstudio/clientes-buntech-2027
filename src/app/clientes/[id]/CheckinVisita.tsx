@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { distanciaKm } from "@/lib/geo/municipios";
+import { registrar } from "@/lib/offline/fila";
+import { reduzirFoto } from "@/lib/offline/foto";
 
 type Props = { clienteId: string; autor: string; lat: number | null; lng: number | null };
 
@@ -15,6 +17,7 @@ export function CheckinVisita({ clienteId, autor, lat, lng }: Props) {
   const [nota, setNota] = useState("");
   const [retorno, setRetorno] = useState("");
   const [buscando, setBuscando] = useState(false);
+  const [foto, setFoto] = useState<File | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -37,14 +40,17 @@ export function CheckinVisita({ clienteId, autor, lat, lng }: Props) {
 
   async function salvar(comGps: boolean) {
     setSalvando(true); setErro(null);
-    const supabase = createClient();
-    const { error } = await supabase.from("interacoes").insert({
-      cliente_id: clienteId, tipo: "visita", descricao: nota.trim() || "Visita realizada.", autor_nome: autor,
-      localizacao: comGps && pos ? `SRID=4326;POINT(${pos.lng} ${pos.lat})` : null,
-    });
-    if (error) { setSalvando(false); return setErro(error.message); }
-    if (retorno) await supabase.from("tarefas").insert({ cliente_id: clienteId, titulo: "Retornar ao cliente após a visita", vencimento: retorno });
-    setSalvando(false); setAberto(false); setNota(""); setRetorno(""); setPos(null); setAviso(null);
+    try {
+      const r = await registrar(createClient(), {
+        clienteId, tipo: "visita", descricao: nota.trim() || "Visita realizada.", autor,
+        gps: comGps ? pos : null, retorno: retorno || null, foto: foto ? await reduzirFoto(foto) : null,
+      });
+      if (r === "fila") alert("Sem sinal: a visita foi guardada no aparelho e será enviada quando o sinal voltar.");
+    } catch (e) {
+      setSalvando(false);
+      return setErro((e as Error).message);
+    }
+    setSalvando(false); setAberto(false); setNota(""); setRetorno(""); setPos(null); setAviso(null); setFoto(null);
     router.refresh();
   }
 
@@ -60,6 +66,11 @@ export function CheckinVisita({ clienteId, autor, lat, lng }: Props) {
       <textarea value={nota} onChange={(e) => setNota(e.target.value)} rows={3} placeholder="Como foi? Com quem falou, o que ficou combinado…" className="mt-3 w-full rounded-lg border border-teal-300 bg-white px-3 py-2 text-sm outline-none" />
       <label className="mt-2 block text-xs text-teal-900">Lembrar de retornar em
         <input type="date" value={retorno} onChange={(e) => setRetorno(e.target.value)} className="ml-2 rounded border border-teal-300 bg-white px-2 py-1 text-sm" />
+      </label>
+      <label className="mt-2 block cursor-pointer text-xs text-teal-900">
+        <span className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium ring-1 ring-teal-300">📷 {foto ? "Trocar foto" : "Anexar foto"}</span>
+        {foto && <span className="ml-2">{foto.name}</span>}
+        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setFoto(e.target.files?.[0] ?? null)} />
       </label>
       {erro && <p className="mt-2 text-xs text-red-600">{erro}</p>}
       <div className="mt-3 flex gap-2">

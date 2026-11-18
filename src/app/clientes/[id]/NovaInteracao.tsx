@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { registrar } from "@/lib/offline/fila";
 
 const TIPOS = [
   ["nota", "Anotação"], ["ligacao", "Ligação"], ["whatsapp", "WhatsApp"], ["email", "E-mail"],
@@ -20,11 +21,15 @@ export function NovaInteracao({ clienteId, autor }: { clienteId: string; autor: 
     e.preventDefault();
     if (!texto.trim()) return;
     setSalvando(true); setErro(null);
-    const { error } = await createClient().from("interacoes").insert({ cliente_id: clienteId, tipo, descricao: texto.trim(), autor_nome: autor });
+    try {
+      const r = await registrar(createClient(), { clienteId, tipo, descricao: texto.trim(), autor, gps: null, retorno: null, foto: null });
+      setTexto("");
+      if (r === "fila") setErro("Sem sinal: guardado no aparelho, será enviado quando voltar.");
+      else router.refresh();
+    } catch (e) {
+      setErro((e as Error).message);
+    }
     setSalvando(false);
-    if (error) return setErro(error.message);
-    setTexto("");
-    router.refresh();
   }
 
   const campo = "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30";

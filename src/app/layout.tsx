@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { OfflineSync } from "@/components/OfflineSync";
 
 export const metadata: Metadata = {
   title: { default: "Buntech Agro · Mapa de Clientes", template: "%s · Buntech Agro" },
@@ -17,7 +18,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className="h-full">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">{children}
+        <OfflineSync />
+      </body>
     </html>
   );
 }

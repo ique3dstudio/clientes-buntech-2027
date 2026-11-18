@@ -13,6 +13,7 @@ import { formatarDocumento } from "@/lib/documento";
 import { resumoPorAno, resumoPorProduto, type Pedido, type VendaAnual } from "@/lib/vendas";
 import { NovaInteracao } from "./NovaInteracao";
 import { CheckinVisita } from "./CheckinVisita";
+import { FotoVisita } from "./FotoVisita";
 
 export const metadata: Metadata = { title: "Ficha do cliente" };
 
@@ -47,7 +48,7 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
     supabase.from("cliente_unidades").select("id, codigo_totvs, loja, razao_social, documento, cidade, uf, principal").eq("cliente_id", id).order("principal", { ascending: false }),
     supabase.from("pedidos").select("id, data, produto_nome, quantidade, unidade, valor_total, tipo").eq("cliente_id", id).order("data", { ascending: false }),
     supabase.from("vendas_anuais").select("ano, periodo, produto_nome, quantidade, faturamento").eq("cliente_id", id),
-    supabase.from("interacoes").select("id, tipo, data, descricao, autor_nome").eq("cliente_id", id).order("data", { ascending: false }).limit(50),
+    supabase.from("interacoes").select("id, tipo, data, descricao, autor_nome, foto_path").eq("cliente_id", id).order("data", { ascending: false }).limit(50),
   ]);
   const { data: tarefasAbertas } = await supabase.from("tarefas").select("id, titulo, vencimento").eq("cliente_id", id).is("concluida_em", null).order("vencimento");
 
@@ -185,6 +186,7 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
                     <li key={i.id}>
                       <p className="text-xs text-slate-500"><strong className="text-slate-700">{ROTULO_INTERACAO[i.tipo] ?? i.tipo}</strong> · {dataHoraBr(i.data)}{i.autor_nome ? ` · ${i.autor_nome}` : ""}</p>
                       <p className="whitespace-pre-line text-sm">{i.descricao}</p>
+                      {i.foto_path && <FotoVisita caminho={i.foto_path} />}
                     </li>
                   ))}
                 </ol>
