@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { podeEscrever } from "@/lib/papeis";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -62,7 +63,7 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
   const ultima = mapa.data?.ultima_compra ?? null;
   const meses = mesesSemComprar(ultima);
   const frentes: string[] = mapa.data?.frentes ?? [];
-  const podeEditar = usuario.papel !== "leitura";
+  const podeEditar = podeEscrever(usuario.papel);
   const etapa = c.funil_etapas as { nome: string; cor: string } | null;
   const terr = c.territorios as { nome: string; cor: string } | null;
   const iniciaisCliente = String(c.nome).split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "?";
