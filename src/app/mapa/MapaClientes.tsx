@@ -251,6 +251,37 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
   }, [selecionadoId, mapaPronto, clientes]);
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  // Legenda: pode ser minimizada e arrastada (posição e estado ficam salvos no navegador)
+  const [legendaAberta, setLegendaAberta] = useState(true);
+  const [legendaPos, setLegendaPos] = useState({ x: 0, y: 0 });
+  const arrasto = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+  useEffect(() => {
+    try {
+      const salvo = JSON.parse(localStorage.getItem("buntech-legenda") ?? "null");
+      if (salvo) {
+        setLegendaAberta(salvo.aberta !== false);
+        setLegendaPos({ x: Number(salvo.x) || 0, y: Number(salvo.y) || 0 });
+      }
+    } catch {}
+  }, []);
+  function salvarLegenda(aberta: boolean, pos: { x: number; y: number }) {
+    try { localStorage.setItem("buntech-legenda", JSON.stringify({ aberta, ...pos })); } catch {}
+  }
+  function iniciarArrasto(e: React.PointerEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest("button")) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    arrasto.current = { px: e.clientX, py: e.clientY, x: legendaPos.x, y: legendaPos.y };
+  }
+  function moverArrasto(e: React.PointerEvent<HTMLDivElement>) {
+    const a = arrasto.current;
+    if (!a) return;
+    setLegendaPos({ x: a.x + e.clientX - a.px, y: a.y + e.clientY - a.py });
+  }
+  function soltarArrasto() {
+    if (!arrasto.current) return;
+    arrasto.current = null;
+    salvarLegenda(legendaAberta, legendaPos);
+  }
   const chip = (ativo: boolean) =>
     `flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition-[background-color,color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-blue ${ativo ? "bg-white text-slate-800 shadow-sm ring-brand-blue/40" : "bg-slate-100/80 text-slate-400 ring-transparent"}`;
 
@@ -347,18 +378,42 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
       </div>
 
       {/* Legenda */}
-      <div className="vidro pointer-events-none absolute bottom-6 left-3 z-10 hidden rounded-3xl bg-white/80 p-4 text-xs shadow-lg ring-1 ring-white/70 backdrop-blur-2xl backdrop-saturate-150 sm:block">
-        <p className="font-semibold text-slate-700">Cor = frente · Borda = situação</p>
-        <p className="mt-1 text-slate-500">Ponto claro = localizado só pela cidade</p>
-        {territorios.length > 0 && (
-          <ul className="mt-2 space-y-1">
-            {territorios.map((t) => (
-              <li key={t.id} className="flex items-center gap-2">
-                <span className="inline-block w-6 border-t-[3px] border-dashed" style={{ borderColor: t.cor }} />
-                <span>{t.nome} · {t.vendedor ?? "sem vendedor"}</span>
-              </li>
-            ))}
-          </ul>
+      <div
+        className="vidro absolute bottom-6 right-16 z-10 hidden rounded-3xl bg-white/85 text-xs shadow-lg ring-1 ring-white/70 backdrop-blur-2xl backdrop-saturate-150 sm:block"
+        style={{ transform: `translate(${legendaPos.x}px, ${legendaPos.y}px)` }}
+      >
+        <div
+          className="flex cursor-grab touch-none select-none items-center justify-between gap-3 px-4 py-2.5 active:cursor-grabbing"
+          onPointerDown={iniciarArrasto}
+          onPointerMove={moverArrasto}
+          onPointerUp={soltarArrasto}
+          title="Arraste para mover"
+        >
+          <span className="font-semibold text-slate-700">Legenda</span>
+          <button
+            type="button"
+            className="rounded-full px-2 py-0.5 text-slate-500 hover:bg-slate-100"
+            aria-label={legendaAberta ? "Minimizar legenda" : "Abrir legenda"}
+            onClick={() => { const n = !legendaAberta; setLegendaAberta(n); salvarLegenda(n, legendaPos); }}
+          >
+            {legendaAberta ? "—" : "+"}
+          </button>
+        </div>
+        {legendaAberta && (
+          <div className="px-4 pb-4">
+            <p className="font-semibold text-slate-700">Cor = frente · Borda = situação</p>
+            <p className="mt-1 text-slate-500">Ponto claro = localizado só pela cidade</p>
+            {territorios.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {territorios.map((t) => (
+                  <li key={t.id} className="flex items-center gap-2">
+                    <span className="inline-block w-6 border-t-[3px] border-dashed" style={{ borderColor: t.cor }} />
+                    <span>{t.nome} · {t.vendedor ?? "sem vendedor"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
 
