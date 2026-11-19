@@ -12,6 +12,9 @@ export async function atualizarPerfil(_prev: ResultadoAcao, form: FormData): Pro
   const id = String(form.get("id") ?? "");
   const papel = String(form.get("papel") ?? "") as Papel;
   const vendedorId = String(form.get("vendedor_id") ?? "") || null;
+  const codigo = String(form.get("codigo") ?? "").trim() || null;
+  if (codigo && !/^[A-Za-z0-9._-]{1,20}$/.test(codigo))
+    return { ok: false, mensagem: "Código inválido: use até 20 letras, números, ponto, hífen ou sublinhado." };
 
   if (!PAPEIS.includes(papel)) return { ok: false, mensagem: "Papel inválido." };
   if ((papel === "vendedor" || papel === "externo") && !vendedorId)
@@ -20,7 +23,7 @@ export async function atualizarPerfil(_prev: ResultadoAcao, form: FormData): Pro
     return { ok: false, mensagem: "Você não pode remover o seu próprio acesso de administrador." };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("perfis").update({ papel, vendedor_id: vendedorId }).eq("id", id);
+  const { error } = await supabase.from("perfis").update({ papel, vendedor_id: vendedorId, codigo_vendedor: codigo }).eq("id", id);
   if (error) return { ok: false, mensagem: error.message };
 
   revalidatePath("/admin/usuarios");

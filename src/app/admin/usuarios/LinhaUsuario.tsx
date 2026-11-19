@@ -5,7 +5,7 @@ import { atualizarPerfil, type ResultadoAcao } from "./actions";
 import { PAPEIS, ROTULO_PAPEL, type Papel } from "@/lib/papeis";
 
 type Props = {
-  perfil: { id: string; nome: string; email: string | null; papel: Papel; vendedor_id: string | null };
+  perfil: { id: string; nome: string; email: string | null; papel: Papel; vendedor_id: string | null; codigo_vendedor: string | null };
   vendedores: { id: string; nome: string }[];
   souEu: boolean;
 };
@@ -16,7 +16,7 @@ export function LinhaUsuario({ perfil, vendedores, souEu }: Props) {
     "rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30";
 
   return (
-    <form action={acao} className="grid items-center gap-3 px-4 py-3 sm:grid-cols-[1fr_200px_200px_120px]">
+    <form action={acao} className="grid items-center gap-3 px-4 py-3 sm:grid-cols-[1fr_200px_200px_100px_120px]">
       <input type="hidden" name="id" value={perfil.id} />
       <div className="min-w-0">
         <p className="truncate font-medium">
@@ -40,6 +40,7 @@ export function LinhaUsuario({ perfil, vendedores, souEu }: Props) {
           </option>
         ))}
       </select>
+      <input name="codigo" defaultValue={perfil.codigo_vendedor ?? ""} placeholder="Código" maxLength={20} aria-label="Código do vendedor" className={sel} />
       <div className="flex items-center gap-2">
         <button
           disabled={pendente}

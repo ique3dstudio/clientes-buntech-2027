@@ -21,7 +21,7 @@ async function Usuarios() {
   const admin = await exigirAdmin();
   const supabase = await createClient();
   const [{ data: perfis }, { data: vendedores }] = await Promise.all([
-    supabase.from("perfis").select("id, nome, email, papel, vendedor_id, created_at").order("created_at"),
+    supabase.from("perfis").select("id, nome, email, papel, vendedor_id, codigo_vendedor, created_at").order("created_at"),
     supabase.from("vendedores").select("id, nome").eq("ativo", true).order("nome"),
   ]);
 

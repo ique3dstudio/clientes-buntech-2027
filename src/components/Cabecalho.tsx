@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ChartBar, DotsThreeOutline, DownloadSimple, FunnelSimple, House, Lifebuoy, MapPinArea, MapTrifold, Path, SignOut, 
-  UploadSimple, UsersThree, X, Sparkle, CheckSquareOffset, type Icon,
+  UploadSimple, UsersThree, X, Sparkle, CheckSquareOffset, UserCircle, type Icon,
 } from "@phosphor-icons/react";
 import { sair } from "@/app/actions";
 import { Logo } from "@/components/Logo";
+import { Avatar } from "@/components/Avatar";
 import { ROTULO_PAPEL } from "@/lib/papeis";
 import type { Usuario } from "@/lib/auth";
 
@@ -31,6 +32,7 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
     { href: "/painel", rotulo: "Painel", icone: ChartBar },
     ...(podeExportar ? [{ href: "/exportar", rotulo: "Exportar", icone: DownloadSimple }] : []),
     { href: "/ajuda", rotulo: "Ajuda", icone: Lifebuoy },
+    { href: "/perfil", rotulo: "Meu perfil", icone: UserCircle },
   ];
   const administracao: Item[] = admin
     ? [
@@ -52,7 +54,13 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
     return () => { window.removeEventListener("keydown", fechar); document.body.style.overflow = ""; };
   }, [aberto]);
 
-  const iniciais = usuario.nome.split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
+  const legenda = (
+    <>
+      {usuario.codigo && <span className="font-semibold text-brand-blue-dark">Cód. {usuario.codigo}</span>}
+      {usuario.codigo && " · "}
+      {ROTULO_PAPEL[usuario.papel]}
+    </>
+  );
 
   const linkTopo = (i: Item) => (
     <Link
@@ -76,7 +84,7 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           </Link>
 
           <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Principal">
-            {[...principais, ...secundarios.filter((i) => i.href !== "/ajuda")].map(linkTopo)}
+            {[...principais, ...secundarios.filter((i) => i.href !== "/ajuda" && i.href !== "/perfil")].map(linkTopo)}
             {admin && (
               <details className="group relative">
                 <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-900/5 hover:text-slate-900 [&::-webkit-details-marker]:hidden">
@@ -99,9 +107,11 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
             </Link>
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold leading-tight text-slate-900">{usuario.nome}</p>
-              <p className="text-xs text-slate-500">{ROTULO_PAPEL[usuario.papel]}</p>
+              <p className="text-xs text-slate-500">{legenda}</p>
             </div>
-            <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-brand-blue to-brand-teal text-sm font-bold text-white shadow-sm">{iniciais}</span>
+            <Link href="/perfil" aria-label="Meu perfil e foto" className="rounded-full transition-transform duration-300 [transition-timing-function:var(--ease-out)] hover:scale-105">
+              <Avatar nome={usuario.nome} fotoUrl={usuario.fotoUrl} className="size-9 text-sm" />
+            </Link>
             <form action={sair} className="hidden sm:block">
               <button className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-900/5 hover:text-slate-900" aria-label="Sair">
                 <SignOut size={18} /> <span className="hidden xl:inline">Sair</span>
@@ -141,10 +151,12 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           <div className="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-lg [animation:subir_0.35s_var(--ease-suave)]">
             <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-slate-200" />
             <div className="mb-4 flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-full bg-gradient-to-br from-brand-blue to-brand-teal font-bold text-white">{iniciais}</span>
+              <Link href="/perfil" onClick={() => setAberto(false)} aria-label="Meu perfil e foto">
+                <Avatar nome={usuario.nome} fotoUrl={usuario.fotoUrl} className="size-11 text-base" />
+              </Link>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-slate-900">{usuario.nome}</p>
-                <p className="text-sm text-slate-500">{ROTULO_PAPEL[usuario.papel]}</p>
+                <p className="text-sm text-slate-500">{legenda}</p>
               </div>
               <button onClick={() => setAberto(false)} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Fechar"><X size={22} /></button>
             </div>
