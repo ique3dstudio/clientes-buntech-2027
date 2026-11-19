@@ -59,8 +59,8 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
       key={i.href}
       href={i.href}
       aria-current={ativo(i.href) ? "page" : undefined}
-      className={`relative rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-200 ${
-        ativo(i.href) ? "bg-brand-ink text-white" : "text-slate-600 hover:bg-slate-900/5 hover:text-slate-900"
+      className={`relative rounded-full px-3.5 py-2 text-sm font-medium transition-[color,background-color,box-shadow] duration-300 ${
+        ativo(i.href) ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-brand" : "text-slate-600 hover:bg-brand-blue/10 hover:text-brand-blue-dark"
       }`}
     >
       {i.rotulo}
@@ -69,7 +69,7 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
 
   return (
     <>
-      <header className="vidro sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl print:hidden">
+      <header className="vidro sticky top-0 z-30 border-b border-slate-200/60 bg-white/75 shadow-[0_1px_0_rgb(11_143_208/0.08)] backdrop-blur-2xl backdrop-saturate-150 print:hidden">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:h-[4.25rem] sm:px-6">
           <Link href="/" className="shrink-0" aria-label="Início">
             <Logo priority className="h-8 w-auto sm:h-9" />
@@ -117,7 +117,7 @@ export function Cabecalho({ usuario }: { usuario: Usuario }) {
           {principais.map((i) => (
             <li key={i.href}>
               <Link href={i.href} aria-current={ativo(i.href) ? "page" : undefined} className={`flex h-full flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-medium transition-colors ${ativo(i.href) ? "text-brand-blue" : "text-slate-500"}`}>
-                <span className={`grid h-7 w-12 place-items-center rounded-full transition-colors duration-300 ${ativo(i.href) ? "bg-brand-blue/12" : ""}`}>
+                <span className={`grid h-7 w-12 place-items-center rounded-full transition-[background-color,transform] duration-300 [transition-timing-function:var(--ease-out)] ${ativo(i.href) ? "scale-105 bg-brand-blue/15" : ""}`}>
                   <i.icone size={22} weight={ativo(i.href) ? "fill" : "regular"} />
                 </span>
                 {i.rotulo}

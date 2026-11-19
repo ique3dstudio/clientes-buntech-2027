@@ -35,6 +35,9 @@
   --shadow-md: 0 6px 16px -4px rgb(14 27 42 / 0.08), 0 2px 4px -2px rgb(14 27 42 / 0.05);
   --shadow-lg: 0 18px 40px -12px rgb(14 27 42 / 0.16), 0 4px 10px -4px rgb(14 27 42 / 0.06);
 
+  /* Brilho da marca: sombra azul-turquesa para botões e ícones em destaque */
+  --shadow-brand: 0 10px 24px -8px rgb(11 143 208 / 0.55), 0 2px 6px -2px rgb(20 165 150 / 0.35);
+
   --ease-suave: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -54,8 +57,9 @@ body {
   font-feature-settings: "cv11", "ss01";
   padding-bottom: calc(var(--nav-b) + env(safe-area-inset-bottom));
   background-image:
-    radial-gradient(60rem 28rem at 100% -10%, rgb(11 143 208 / 0.07), transparent 60%),
-    radial-gradient(48rem 24rem at -10% 0%, rgb(20 165 150 / 0.06), transparent 60%);
+    radial-gradient(60rem 28rem at 100% -10%, rgb(11 143 208 / 0.13), transparent 60%),
+    radial-gradient(48rem 24rem at -10% 0%, rgb(20 165 150 / 0.11), transparent 60%),
+    radial-gradient(40rem 20rem at 50% 110%, rgb(11 143 208 / 0.06), transparent 60%);
   background-repeat: no-repeat;
 }
 
@@ -128,6 +132,58 @@ main { width: 100%; min-width: 0; animation: entrar-leve 0.28s var(--ease-out) b
 @media (hover: hover) and (pointer: fine) {
   .elevar:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 }
+
+/* ---- Identidade Buntech --------------------------------------------------
+   Faixa de destaque com manchas de luz azul e turquesa que flutuam devagar (só transform),
+   cartões de vidro claro e ícones com o degradê da marca. */
+.hero-brand {
+  position: relative; isolation: isolate; overflow: hidden;
+  background: linear-gradient(135deg, #08121f 0%, #0a3556 58%, #0b6fa3 130%);
+}
+.hero-brand::before, .hero-brand::after {
+  content: ""; position: absolute; z-index: -1; border-radius: 9999px; filter: blur(64px); opacity: 0.55; will-change: transform;
+}
+.hero-brand::before { width: 22rem; height: 22rem; top: -9rem; right: -4rem; background: var(--color-brand-blue); animation: flutuar-a 16s ease-in-out infinite alternate; }
+.hero-brand::after { width: 18rem; height: 18rem; bottom: -9rem; right: 16rem; background: var(--color-brand-teal); animation: flutuar-b 19s ease-in-out infinite alternate; }
+@keyframes flutuar-a { to { transform: translate3d(-3rem, 2rem, 0) scale(1.12); } }
+@keyframes flutuar-b { to { transform: translate3d(4rem, -1.5rem, 0) scale(1.18); } }
+
+/* Pontilhado fino sobre o fundo escuro, some para a esquerda */
+.pontos {
+  background-image: radial-gradient(rgb(255 255 255 / 0.18) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(115deg, transparent 15%, #000 85%);
+  mask-image: linear-gradient(115deg, transparent 15%, #000 85%);
+}
+
+.cartao {
+  position: relative; overflow: hidden;
+  background: rgb(255 255 255 / 0.82); backdrop-filter: blur(10px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 0 0 1px rgb(14 27 42 / 0.06), var(--shadow-sm);
+  transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cartao:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgb(11 143 208 / 0.28), var(--shadow-lg); }
+  .cartao:hover .icone-marca { transform: scale(1.08) rotate(-4deg); }
+}
+.icone-marca {
+  background: linear-gradient(135deg, var(--color-brand-blue), var(--color-brand-teal)); color: #fff;
+  box-shadow: var(--shadow-brand);
+  transition: transform 0.35s var(--ease-out);
+}
+.texto-marca {
+  background: linear-gradient(90deg, var(--color-brand-blue), var(--color-brand-teal));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+/* Barra que cresce da esquerda; --i escalona a entrada */
+.barra-cresce { transform-origin: left; animation: crescer 0.9s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 12) * 60ms + 250ms); }
+@keyframes crescer { from { transform: scaleX(0); } }
+/* Seta que avança ao passar o mouse sobre o botão */
+@media (hover: hover) and (pointer: fine) {
+  .seta-avanca:hover .seta { transform: translateX(4px); }
+}
+.seta { transition: transform 0.3s var(--ease-out); }
 
 /* Tabelas largas rolam dentro do cartão, nunca estouram a tela */
 table { font-variant-numeric: tabular-nums; }
