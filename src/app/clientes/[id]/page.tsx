@@ -65,27 +65,32 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
   const podeEditar = usuario.papel !== "leitura";
   const etapa = c.funil_etapas as { nome: string; cor: string } | null;
   const terr = c.territorios as { nome: string; cor: string } | null;
+  const iniciaisCliente = String(c.nome).split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("") || "?";
 
   return (
     <>
       <Cabecalho usuario={usuario} />
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8 sm:px-6">
         {/* Cabeçalho */}
-        <header className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <header className="painel entrar p-6 sm:p-7">
+          <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue to-brand-teal" />
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0">
-              <Link href="/mapa" className="text-sm text-brand-blue hover:underline">← Voltar ao mapa</Link>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight">{c.nome}</h1>
-              {c.razao_social && <p className="text-sm text-slate-500">{c.razao_social}</p>}
-              <p className="mt-1 text-sm text-slate-600">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "Local não informado"}</p>
+            <div className="flex min-w-0 items-start gap-4">
+              <span aria-hidden className="icone-marca grid size-14 shrink-0 place-items-center rounded-2xl font-[family-name:var(--font-display)] text-xl font-bold">{iniciaisCliente}</span>
+              <div className="min-w-0">
+                <Link href="/mapa" className="text-sm text-brand-blue hover:underline">← Voltar ao mapa</Link>
+                <h1 className="mt-1 text-3xl leading-tight">{c.nome}</h1>
+                {c.razao_social && <p className="text-sm text-slate-500">{c.razao_social}</p>}
+                <p className="mt-1 text-sm text-slate-600">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "Local não informado"}</p>
+              </div>
             </div>
             <div className="flex flex-wrap items-start gap-2">
               {podeEditar && <CheckinVisita clienteId={id} autor={usuario.nome} lat={mapa.data?.lat ?? null} lng={mapa.data?.lng ?? null} />}
               {mapa.data?.lat != null && (
-                <Link href={`/mapa?c=${id}`} className="rounded-lg px-3 py-2 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">Ver no mapa</Link>
+                <Link href={`/mapa?c=${id}`} className="rounded-full px-4 py-2 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">Ver no mapa</Link>
               )}
               {podeEditar && (
-                <Link href={`/clientes/${id}/editar`} className="rounded-lg bg-brand-blue px-3 py-2 text-sm font-semibold text-white hover:bg-brand-blue-dark">Editar</Link>
+                <Link href={`/clientes/${id}/editar`} className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal px-5 py-2 text-sm font-semibold text-white shadow-brand">Editar</Link>
               )}
             </div>
           </div>
@@ -109,11 +114,11 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
 
         {/* Indicadores */}
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-          <Indicador t="Faturamento total" v={brl(total)} />
-          <Indicador t="Volume total" v={toneladas(totalT)} />
-          <Indicador t="Última compra" v={dataBr(ultima)} sub={meses != null ? `${meses} ${meses === 1 ? "mês" : "meses"} atrás` : undefined} alerta={meses != null && meses >= 6} />
-          <Indicador t="Ritmo" v={c.ritmo_ton_mes != null ? `${c.ritmo_ton_mes} t/mês` : "—"} />
-          <Indicador t="Potencial" v={c.potencial_ton_ano != null ? `${c.potencial_ton_ano} t/ano` : "—"} />
+          <Indicador n={1} destaque t="Faturamento total" v={brl(total)} />
+          <Indicador n={2} t="Volume total" v={toneladas(totalT)} />
+          <Indicador n={3} t="Última compra" v={dataBr(ultima)} sub={meses != null ? `${meses} ${meses === 1 ? "mês" : "meses"} atrás` : undefined} alerta={meses != null && meses >= 6} />
+          <Indicador n={4} t="Ritmo" v={c.ritmo_ton_mes != null ? `${c.ritmo_ton_mes} t/mês` : "—"} />
+          <Indicador n={5} t="Potencial" v={c.potencial_ton_ano != null ? `${c.potencial_ton_ano} t/ano` : "—"} />
         </section>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -123,10 +128,10 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
               {anos.length === 0 ? <Vazio texto="Sem vendas registradas." /> : (
                 <>
                   <div className="flex items-end gap-4" role="img" aria-label="Faturamento por ano">
-                    {anos.map((a) => (
+                    {anos.map((a, n) => (
                       <div key={a.ano} className="flex flex-1 flex-col items-center gap-1">
                         <span className="text-xs text-slate-500">{brl(a.faturamento)}</span>
-                        <div className="w-full rounded-t-md bg-gradient-to-t from-brand-blue to-brand-teal" style={{ height: `${Math.max(4, (a.faturamento / maxFat) * 120)}px` }} />
+                        <div className="barra-sobe w-full rounded-t-xl bg-gradient-to-t from-brand-blue to-brand-teal" style={{ height: `${Math.max(4, (a.faturamento / maxFat) * 140)}px`, "--i": n } as React.CSSProperties} />
                         <span className="text-sm font-medium">{a.ano}</span>
                         <span className="text-xs text-slate-400">{toneladas(a.toneladas)}</span>
                       </div>
@@ -181,9 +186,9 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
             <Cartao titulo="Histórico de contatos">
               {podeEditar && <div className="mb-4"><NovaInteracao clienteId={id} autor={usuario.nome} /></div>}
               {(it.data ?? []).length === 0 ? <Vazio texto="Nenhum contato registrado ainda." /> : (
-                <ol className="space-y-3 border-l-2 border-slate-200 pl-4">
+                <ol className="space-y-4 border-l-2 border-brand-blue/20 pl-5">
                   {(it.data ?? []).map((i) => (
-                    <li key={i.id}>
+                    <li key={i.id} className="relative before:absolute before:-left-[1.72rem] before:top-1 before:size-2.5 before:rounded-full before:bg-brand-blue before:ring-4 before:ring-brand-blue/15">
                       <p className="text-xs text-slate-500"><strong className="text-slate-700">{ROTULO_INTERACAO[i.tipo] ?? i.tipo}</strong> · {dataHoraBr(i.data)}{i.autor_nome ? ` · ${i.autor_nome}` : ""}</p>
                       <p className="whitespace-pre-line text-sm">{i.descricao}</p>
                       {i.foto_path && <FotoVisita caminho={i.foto_path} />}
@@ -215,7 +220,7 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
                         {p.telefone && (
                           <p>
                             <a className="text-brand-blue hover:underline" href={`tel:${p.telefone.replace(/\D/g, "")}`}>{p.telefone}</a>
-                            {zap && <a className="ml-2 text-xs text-teal-700 hover:underline" href={zap} target="_blank" rel="noreferrer">WhatsApp</a>}
+                            {zap && <a className="ml-2 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 hover:bg-teal-100" href={zap} target="_blank" rel="noreferrer">WhatsApp</a>}
                           </p>
                         )}
                         {p.email && <p><a className="text-brand-blue hover:underline" href={`mailto:${p.email}`}>{p.email}</a></p>}
@@ -265,20 +270,27 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
   );
 }
 
-function Indicador({ t, v, sub, alerta }: { t: string; v: string; sub?: string; alerta?: boolean }) {
+function Indicador({ t, v, sub, alerta, destaque, n }: { t: string; v: string; sub?: string; alerta?: boolean; destaque?: boolean; n: number }) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <p className="text-xs text-slate-500">{t}</p>
-      <p className="mt-1 text-xl font-semibold">{v}</p>
-      {sub && <p className={`text-xs ${alerta ? "text-amber-600" : "text-slate-400"}`}>{sub}</p>}
+    <div
+      style={{ "--i": n } as React.CSSProperties}
+      className={`entrar relative overflow-hidden rounded-2xl p-4 ${destaque ? "bg-gradient-to-br from-[#08121f] to-[#0a3556] text-white shadow-lg" : "painel"}`}
+    >
+      {destaque && <span aria-hidden className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-brand-blue/50 blur-2xl" />}
+      <p className={`relative text-xs ${destaque ? "text-white/70" : "text-slate-500"}`}>{t}</p>
+      <p className="relative mt-1 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight">{v}</p>
+      {sub && <p className={`relative text-xs ${alerta ? "font-medium text-amber-600" : destaque ? "text-white/60" : "text-slate-400"}`}>{sub}</p>}
     </div>
   );
 }
 
 function Cartao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="entrar min-w-0 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-      <h2 className="mb-3 text-lg">{titulo}</h2>
+    <section className="painel entrar min-w-0 p-5">
+      <h2 className="mb-3 flex items-center gap-2 text-lg">
+        <span aria-hidden className="h-5 w-1 rounded-full bg-gradient-to-b from-brand-blue to-brand-teal" />
+        {titulo}
+      </h2>
       {children}
     </section>
   );

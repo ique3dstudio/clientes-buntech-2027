@@ -167,6 +167,16 @@ main { width: 100%; min-width: 0; animation: entrar-leve 0.28s var(--ease-out) b
   .cartao:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgb(11 143 208 / 0.28), var(--shadow-lg); }
   .cartao:hover .icone-marca { transform: scale(1.08) rotate(-4deg); }
 }
+/* Painel de vidro sem elevação ao passar o mouse: para blocos de leitura (fichas, tabelas) */
+.painel {
+  position: relative; overflow: hidden;
+  background: rgb(255 255 255 / 0.85); backdrop-filter: blur(10px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 0 0 1px rgb(14 27 42 / 0.06), var(--shadow-sm);
+}
+/* Barra vertical que sobe da base; --i escalona */
+.barra-sobe { transform-origin: bottom; animation: sobe 0.8s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 12) * 80ms + 200ms); }
+@keyframes sobe { from { transform: scaleY(0); } }
 .icone-marca {
   background: linear-gradient(135deg, var(--color-brand-blue), var(--color-brand-teal)); color: #fff;
   box-shadow: var(--shadow-brand);
