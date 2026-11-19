@@ -29,7 +29,7 @@ const VAZIO: Form = {
 };
 
 const campo =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30";
+  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/15";
 
 const nulo = (s: string) => (s.trim() === "" ? null : s.trim());
 const numero = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
@@ -414,11 +414,11 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
       {erro && <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200">{erro}</p>}
       {aviso && <p role="status" className="rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-900 ring-1 ring-sky-200">{aviso}</p>}
 
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-slate-200 bg-white/90 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:ring-1 sm:ring-slate-200">
-        <button disabled={salvando} className="rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-brand-blue-dark disabled:opacity-60">
+      <div className="sticky bottom-[calc(var(--nav-b)+env(safe-area-inset-bottom))] z-20 -mx-4 flex gap-3 border-t border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-2xl backdrop-saturate-150 sm:mx-0 sm:rounded-2xl sm:ring-1 sm:ring-white/70 sm:shadow-lg">
+        <button disabled={salvando} className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-5 py-2.5 font-semibold text-white disabled:opacity-60">
           {salvando ? "Salvando…" : clienteId ? "Salvar alterações" : "Cadastrar cliente"}
         </button>
-        <button type="button" onClick={() => router.back()} className="rounded-lg px-4 py-2.5 text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">Cancelar</button>
+        <button type="button" onClick={() => router.back()} className="rounded-full px-5 py-2.5 text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">Cancelar</button>
       </div>
     </form>
   );
@@ -426,8 +426,11 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
 
 function Secao({ titulo, descricao, children }: { titulo: string; descricao?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-      <h2 className="text-base font-semibold">{titulo}</h2>
+    <section className="painel entrar !overflow-visible p-5 sm:p-6">
+      <h2 className="flex items-center gap-2 text-base font-semibold">
+        <span aria-hidden className="h-4 w-1 rounded-full bg-gradient-to-b from-brand-blue to-brand-teal" />
+        {titulo}
+      </h2>
       {descricao && <p className="mt-1 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-sky-200">{descricao}</p>}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
     </section>

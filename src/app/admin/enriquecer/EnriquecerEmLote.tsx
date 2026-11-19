@@ -103,7 +103,7 @@ export function EnriquecerEmLote() {
   return (
     <div className="mt-6 space-y-5">
       {!fila && (
-        <button onClick={carregarFila} className="rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-brand-blue-dark">
+        <button onClick={carregarFila} className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-5 py-2.5 font-semibold text-white">
           Ver quantos clientes têm dados faltando
         </button>
       )}
@@ -116,7 +116,7 @@ export function EnriquecerEmLote() {
           </p>
           <div className="mt-4 flex items-center gap-3">
             {!rodando ? (
-              <button onClick={rodar} disabled={!fila.length} className="rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-brand-blue-dark disabled:opacity-40">
+              <button onClick={rodar} disabled={!fila.length} className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-5 py-2.5 font-semibold text-white disabled:opacity-40">
                 Completar automaticamente
               </button>
             ) : (
@@ -132,7 +132,7 @@ export function EnriquecerEmLote() {
         </div>
       )}
       {log.length > 0 && (
-        <ul className="max-h-96 space-y-1 overflow-auto rounded-xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-200">
+        <ul className="max-h-96 space-y-1 overflow-auto painel p-4 text-sm">
           {log.map((l, i) => <li key={l.id + i} className={l.tom === "erro" ? "text-red-600" : "text-slate-700"}>{l.tom === "ok" ? "✔ " : "✖ "}{l.texto}</li>)}
         </ul>
       )}

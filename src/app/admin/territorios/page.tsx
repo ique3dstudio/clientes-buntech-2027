@@ -21,7 +21,7 @@ async function Conteudo() {
     <>
       <Cabecalho usuario={admin} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Territórios dos vendedores</h1>
+        <h1 className="text-3xl"><span className="texto-marca">Territórios dos vendedores</span></h1>
         <p className="mt-1 text-sm text-slate-500">
           Cada território é formado por municípios do IBGE. Mova regiões inteiras (mesorregião ou microrregião) ou
           municípios avulsos; o contorno tracejado no mapa e o vendedor de cada cliente são recalculados na hora.

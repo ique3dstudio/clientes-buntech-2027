@@ -43,7 +43,7 @@ export function LinhaUsuario({ perfil, vendedores, souEu }: Props) {
       <div className="flex items-center gap-2">
         <button
           disabled={pendente}
-          className="rounded-md bg-brand-blue px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-blue-dark disabled:opacity-60"
+          className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60"
         >
           {pendente ? "…" : "Salvar"}
         </button>

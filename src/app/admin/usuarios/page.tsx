@@ -53,7 +53,7 @@ async function Usuarios() {
     <>
       <Cabecalho usuario={admin} />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Usuários e permissões</h1>
+        <h1 className="text-3xl"><span className="texto-marca">Usuários e permissões</span></h1>
         <p className="mt-1 text-sm text-slate-500">
           Novos cadastros chegam como “Aguardando aprovação”. Defina o papel e, para vendedores, o vínculo com o
           vendedor do território.
@@ -62,7 +62,7 @@ async function Usuarios() {
         {pendentes.length > 0 && bloco("Aguardando aprovação", pendentes, true)}
         {bloco("Com acesso", ativos)}
 
-        <details className="mt-8 rounded-xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-200">
+        <details className="mt-8 painel p-4 text-sm">
           <summary className="cursor-pointer font-medium">O que cada papel pode fazer</summary>
           <dl className="mt-3 grid gap-2 sm:grid-cols-2">
             {PAPEIS.map((p) => (

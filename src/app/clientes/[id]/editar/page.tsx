@@ -24,7 +24,7 @@ async function Conteudo({ params }: { params: PageProps<"/clientes/[id]/editar">
     <>
       <Cabecalho usuario={usuario} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Editar cliente</h1>
+        <h1 className="text-3xl"><span className="texto-marca">Editar cliente</span></h1>
         <ClienteForm clienteId={id} papel={usuario.papel} vendedorId={usuario.vendedorId} />
       </main>
     </>

@@ -23,7 +23,7 @@ async function Conteudo() {
     <>
       <Cabecalho usuario={usuario} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Novo cliente</h1>
+        <h1 className="text-3xl"><span className="texto-marca">Novo cliente</span></h1>
         <ClienteForm papel={usuario.papel} vendedorId={usuario.vendedorId} />
       </main>
     </>

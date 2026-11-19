@@ -21,7 +21,7 @@ async function Conteudo() {
     <>
       <Cabecalho usuario={admin} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Importar planilha de clientes</h1>
+        <h1 className="text-3xl"><span className="texto-marca">Importar planilha de clientes</span></h1>
         <p className="mt-1 text-sm text-slate-500">
           Envie a planilha da carteira (.xlsx). O arquivo é lido no seu navegador e nada é gravado até você confirmar.
         </p>

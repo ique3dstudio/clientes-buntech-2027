@@ -110,7 +110,7 @@ export function ImportarPlanilha() {
       <div className="mt-8 rounded-xl bg-teal-50 p-6 ring-1 ring-teal-200">
         <p className="font-semibold text-teal-900">Importação concluída ✔</p>
         <p className="mt-1 text-sm text-teal-800">{imp?.clientes.length} clientes gravados.</p>
-        <a href="/mapa" className="mt-4 inline-block rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue-dark">
+        <a href="/mapa" className="mt-4 inline-block rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-4 py-2 text-sm font-semibold text-white">
           Ver no mapa
         </a>
       </div>
@@ -136,7 +136,7 @@ export function ImportarPlanilha() {
               ["Clientes", imp.clientes.length], ["Unidades/CNPJs", imp.unidades.length], ["Contatos", imp.contatos.length],
               ["Pedidos", imp.pedidos.length], ["Vendas anuais", imp.vendas.length],
             ].map(([t, n]) => (
-              <div key={t} className="rounded-xl bg-white p-4 text-center shadow-sm ring-1 ring-slate-200">
+              <div key={t} className="painel p-4 text-center">
                 <p className="text-2xl font-semibold text-brand-blue">{n}</p>
                 <p className="text-xs text-slate-500">{t}</p>
               </div>
@@ -152,7 +152,7 @@ export function ImportarPlanilha() {
           <Aviso titulo="Já cadastrados — ignorados nesta importação" itens={imp.relatorio.jaCadastrados} />
 
           <div className="flex gap-3">
-            <button onClick={gravar} className="rounded-lg bg-brand-blue px-5 py-2.5 font-semibold text-white hover:bg-brand-blue-dark">
+            <button onClick={gravar} className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-5 py-2.5 font-semibold text-white">
               Confirmar e gravar {imp.clientes.length} clientes
             </button>
             <button onClick={() => { setImp(null); setFase("inicio"); }} className="rounded-lg px-4 py-2.5 text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">

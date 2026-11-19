@@ -93,7 +93,7 @@ export function EditorTerritorios() {
     <div className="mt-6 space-y-8">
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {territorios.map((t) => (
-          <article key={t.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200" style={{ borderLeft: `4px dashed ${t.cor}` }}>
+          <article key={t.id} className="painel p-4" style={{ borderLeft: `4px dashed ${t.cor}` }}>
             <h2 className="font-semibold">{t.nome}</h2>
             <p className="text-xs text-slate-500">{t.municipios} municípios · {t.clientes} clientes</p>
             <label className="mt-3 block text-xs text-slate-500">Vendedor
@@ -108,7 +108,7 @@ export function EditorTerritorios() {
 
       {msg && <p role="status" className={`rounded-lg px-4 py-3 text-sm ring-1 ${msg.ok ? "bg-teal-50 text-teal-900 ring-teal-200" : "bg-red-50 text-red-700 ring-red-200"}`}>{msg.texto}</p>}
 
-      <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+      <section className="painel p-5">
         <h2 className="text-base font-semibold">Mover áreas entre territórios</h2>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="text-sm">Estado{" "}
@@ -148,7 +148,7 @@ export function EditorTerritorios() {
                     {territorios.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                   </select>
                   <button onClick={() => mover(chave, itens)} disabled={!destino[chave] || ocupado === chave}
-                    className="rounded-md bg-brand-blue px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-blue-dark disabled:opacity-40">
+                    className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal shadow-brand px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40">
                     {ocupado === chave ? "…" : "Mover"}
                   </button>
                 </div>
