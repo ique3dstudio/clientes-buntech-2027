@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "@phosphor-icons/react";
 import { createClient, definirManterConectado } from "@/lib/supabase/client";
 
 type Modo = "entrar" | "cadastrar" | "recuperar";
@@ -96,11 +97,11 @@ export function FormLogin() {
   }
 
   const campo =
-    "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 shadow-sm outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/30";
+    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/15";
 
   return (
     <div className="w-full">
-      <h1 className="text-3xl text-slate-900">{TITULO[modo]}</h1>
+      <h1 className="text-3xl"><span className="texto-marca">{TITULO[modo]}</span></h1>
       <p className="mt-1 text-sm text-slate-500">
         {modo === "cadastrar"
           ? "Após o cadastro, um administrador libera o seu acesso."
@@ -109,12 +110,12 @@ export function FormLogin() {
 
       <form onSubmit={enviar} className="mt-8 space-y-4">
         {modo === "cadastrar" && (
-          <label className="block">
+          <label className="entrar block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Nome</span>
             <input className={campo} value={nome} onChange={(e) => setNome(e.target.value)} required autoComplete="name" />
           </label>
         )}
-        <label className="block">
+        <label style={{ "--i": 1 } as React.CSSProperties} className="entrar block">
           <span className="mb-1 block text-sm font-medium text-slate-700">E-mail</span>
           <input
             className={campo}
@@ -126,7 +127,7 @@ export function FormLogin() {
           />
         </label>
         {modo !== "recuperar" && (
-          <label className="block">
+          <label style={{ "--i": 2 } as React.CSSProperties} className="entrar block">
             <span className="mb-1 block text-sm font-medium text-slate-700">Senha</span>
             <input
               className={campo}
@@ -184,9 +185,10 @@ export function FormLogin() {
         <button
           type="submit"
           disabled={carregando}
-          className="w-full rounded-lg bg-brand-blue px-4 py-2.5 font-semibold text-white shadow-sm transition hover:bg-brand-blue-dark disabled:opacity-60"
+          className="seta-avanca flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-blue to-brand-teal px-4 py-3 font-semibold text-white shadow-brand disabled:opacity-60 disabled:shadow-none"
         >
           {carregando ? "Aguarde…" : modo === "entrar" ? "Entrar" : modo === "cadastrar" ? "Criar acesso" : "Enviar link"}
+          {!carregando && <ArrowRight size={18} weight="bold" className="seta" />}
         </button>
       </form>
 
