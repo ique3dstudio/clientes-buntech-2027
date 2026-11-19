@@ -1,13 +1,17 @@
 import Link from "next/link";
 import type { DadosPainel } from "@/lib/painel-dados";
+import { ContadorAnimado } from "@/components/ContadorAnimado";
 
 export const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
-export function Kpi({ rotulo, valor, detalhe, i = 0 }: { rotulo: string; valor: string | number; detalhe?: string; i?: number }) {
+export function Kpi({ rotulo, valor, detalhe, i = 0, animar = false }: { rotulo: string; valor: string | number; detalhe?: string; i?: number; animar?: boolean }) {
   return (
-    <div style={{ "--i": i } as React.CSSProperties} className="entrar rounded-2xl border border-slate-200 bg-white p-4">
+    <div style={{ "--i": i } as React.CSSProperties} className="painel entrar p-4">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue to-brand-teal" />
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{rotulo}</p>
-      <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-slate-900">{valor}</p>
+      <p className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight text-slate-900">
+        {animar && typeof valor === "number" ? <ContadorAnimado valor={valor} /> : valor}
+      </p>
       {detalhe && <p className="mt-0.5 text-xs text-slate-500">{detalhe}</p>}
     </div>
   );
@@ -15,22 +19,25 @@ export function Kpi({ rotulo, valor, detalhe, i = 0 }: { rotulo: string; valor: 
 
 export function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="min-w-0 break-inside-avoid rounded-2xl border border-slate-200 bg-white p-4">
-      <h2 className="mb-3 text-sm font-semibold text-slate-900">{titulo}</h2>
+    <section className="painel min-w-0 break-inside-avoid p-5">
+      <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900">
+        <span aria-hidden className="h-4 w-1 rounded-full bg-gradient-to-b from-brand-blue to-brand-teal" />
+        {titulo}
+      </h2>
       {children}
     </section>
   );
 }
 
-function Barra({ pct, cor }: { pct: number; cor: string }) {
+function Barra({ pct, cor, i = 0 }: { pct: number; cor: string; i?: number }) {
   return (
-    <div className="h-2.5 w-full rounded-full bg-slate-100">
-      <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: cor }} />
+    <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="barra-cresce h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: cor, "--i": i } as React.CSSProperties} />
     </div>
   );
 }
 
-export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: boolean }) {
+export function BlocosPainel({ d, links = true, animar = false }: { d: DadosPainel; links?: boolean; animar?: boolean }) {
   const s = d.situacao;
   const maxFunil = Math.max(1, ...d.funil.map((f) => f.n));
   const maxFat = Math.max(1, ...d.faturamento.map((f) => f.faturamento));
@@ -38,21 +45,21 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Kpi rotulo="Cadastros" valor={s.total}  i={1} />
-        <Kpi rotulo="Clientes" valor={s.carteira} detalhe="na carteira"  i={2} />
-        <Kpi rotulo="Prospects" valor={s.prospect}  i={3} />
-        <Kpi rotulo="Perdidos" valor={s.perdido}  i={4} />
-        <Kpi rotulo="Sem localização" valor={s.semLocal} detalhe={`${s.aproximado} aproximados`}  i={5} />
-        <Kpi rotulo="Tarefas atrasadas" valor={d.tarefasAtrasadas}  i={6} />
+        <Kpi animar={animar} rotulo="Cadastros" valor={s.total}  i={1} />
+        <Kpi animar={animar} rotulo="Clientes" valor={s.carteira} detalhe="na carteira"  i={2} />
+        <Kpi animar={animar} rotulo="Prospects" valor={s.prospect}  i={3} />
+        <Kpi animar={animar} rotulo="Perdidos" valor={s.perdido}  i={4} />
+        <Kpi animar={animar} rotulo="Sem localização" valor={s.semLocal} detalhe={`${s.aproximado} aproximados`}  i={5} />
+        <Kpi animar={animar} rotulo="Tarefas atrasadas" valor={d.tarefasAtrasadas}  i={6} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Secao titulo="Funil de vendas">
           <ul className="space-y-2">
-            {d.funil.map((f) => (
+            {d.funil.map((f, n) => (
               <li key={f.chave} className="grid grid-cols-[8rem_1fr_3rem] items-center gap-3 text-sm">
                 <span className="truncate text-slate-700">{f.nome}</span>
-                <Barra pct={(f.n / maxFunil) * 100} cor={f.cor} />
+                <Barra pct={(f.n / maxFunil) * 100} cor={f.cor} i={n} />
                 <span className="text-right tabular-nums text-slate-900">{f.n}</span>
               </li>
             ))}
@@ -67,7 +74,7 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
               {d.faturamento.map((f) => (
                 <li key={f.ano} className="grid grid-cols-[3rem_1fr_7rem] items-center gap-3 text-sm">
                   <span className="text-slate-700">{f.ano}</span>
-                  <Barra pct={(f.faturamento / maxFat) * 100} cor="#0891d1" />
+                  <Barra pct={(f.faturamento / maxFat) * 100} cor="#0b8fd0" />
                   <span className="text-right tabular-nums text-slate-900">{reais(f.faturamento)}</span>
                 </li>
               ))}
@@ -92,7 +99,7 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
             </thead>
             <tbody>
               {d.territorios.map((t) => (
-                <tr key={t.id ?? "fora"} className="border-b border-slate-100 last:border-0">
+                <tr key={t.id ?? "fora"} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-brand-blue/5">
                   <td className="py-2 pr-3">
                     <span className="mr-2 inline-block size-2.5 rounded-full align-middle" style={{ background: t.cor }} />
                     {t.nome}
@@ -125,7 +132,7 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
                 <li key={t.id} className="grid grid-cols-[1fr_6rem] items-center gap-3 text-sm">
                   <div>
                     {links ? <Link href={`/clientes/${t.id}`} className="text-slate-800 hover:text-brand-blue">{t.nome}</Link> : <span>{t.nome}</span>}
-                    <Barra pct={(t.valor / maxTop) * 100} cor="#15803d" />
+                    <Barra pct={(t.valor / maxTop) * 100} cor="#14a596" />
                   </div>
                   <span className="text-right tabular-nums">{reais(t.valor)}</span>
                 </li>
@@ -151,7 +158,7 @@ export function BlocosPainel({ d, links = true }: { d: DadosPainel; links?: bool
               </thead>
               <tbody>
                 {d.atividade.map((a) => (
-                  <tr key={a.quem} className="border-b border-slate-100 last:border-0">
+                  <tr key={a.quem} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-brand-blue/5">
                     <td className="py-2">{a.quem}</td>
                     <td className="pl-4 text-right tabular-nums">{a.visitas}</td>
                     <td className="pl-4 text-right tabular-nums">{a.ligacoes}</td>

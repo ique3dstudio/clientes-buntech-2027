@@ -28,14 +28,14 @@ async function Conteudo() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">Painel</h1>
+            <h1 className="text-3xl"><span className="texto-marca">Painel</span></h1>
             <p className="text-sm text-slate-500">Atualizado em {dados.geradoEm}</p>
           </div>
-          <Link href="/relatorio" className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+          <Link href="/relatorio" className="rounded-full bg-gradient-to-r from-brand-blue to-brand-teal px-5 py-2.5 text-sm font-semibold text-white shadow-brand">
             Relatório mensal (PDF)
           </Link>
         </div>
-        <BlocosPainel d={dados} />
+        <BlocosPainel d={dados} animar />
       </main>
     </>
   );

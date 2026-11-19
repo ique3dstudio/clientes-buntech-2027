@@ -211,4 +211,6 @@ table { font-variant-numeric: tabular-nums; }
 @media print {
   body { background: #fff; padding-bottom: 0; }
   main { animation: none; }
+  /* Relatório impresso: tudo já no estado final */
+  .entrar, .barra-cresce, .barra-sobe { animation: none !important; }
 }
