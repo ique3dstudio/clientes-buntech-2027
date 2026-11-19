@@ -113,24 +113,31 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
     ...etapas.map((e) => ({ chave: String(e.id), nome: e.nome, cor: e.cor })),
     { chave: "perdido", nome: "Perdido", cor: "#64748b" },
   ];
+  const totalAtivos = Math.max(1, colunasVisiveis.filter((c) => c.chave !== "perdido").reduce((s, c) => s + (colunas.get(c.chave)?.length ?? 0), 0));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-3 px-4 pb-1 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:px-6">
-        <div className="mr-auto">
-          <h1 className="text-2xl">Funil de vendas</h1>
+        <div className="mr-auto w-full sm:w-auto sm:min-w-80">
+          <h1 className="text-3xl"><span className="texto-marca">Funil de vendas</span></h1>
           <p className="text-sm text-slate-500">
-            {filtrados.length} clientes{!podeEditar && " · somente leitura"}
+            <span className="font-semibold tabular-nums text-slate-700">{filtrados.length}</span> clientes{!podeEditar && " · somente leitura"}
             {erro && <span className="ml-2 text-red-600">{erro}</span>}
           </p>
+          <div aria-hidden className="mt-2.5 flex h-1.5 w-full max-w-md overflow-hidden rounded-full bg-slate-200/70">
+            {colunasVisiveis.filter((c) => c.chave !== "perdido").map((col, n) => {
+              const q = (colunas.get(col.chave) ?? []).length;
+              return q ? <span key={col.chave} className="barra-cresce h-full" style={{ width: `${(q / totalAtivos) * 100}%`, background: col.cor, "--i": n } as React.CSSProperties} /> : null;
+            })}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar cliente ou cidade" aria-label="Buscar" className="col-span-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm sm:w-60" />
-          <select value={vendedor} onChange={(e) => setVendedor(e.target.value)} aria-label="Vendedor" className="rounded-xl border border-slate-200 bg-white px-3 text-sm">
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar cliente ou cidade" aria-label="Buscar" className="col-span-2 rounded-full border border-slate-200 bg-white/80 px-4 text-sm shadow-sm backdrop-blur sm:w-60" />
+          <select value={vendedor} onChange={(e) => setVendedor(e.target.value)} aria-label="Vendedor" className="rounded-full border border-slate-200 bg-white/80 px-3.5 text-sm shadow-sm backdrop-blur">
             <option value="">Todos os vendedores</option>
             {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nome}</option>)}
           </select>
-          <select value={frente} onChange={(e) => setFrente(e.target.value)} aria-label="Frente" className="rounded-xl border border-slate-200 bg-white px-3 text-sm">
+          <select value={frente} onChange={(e) => setFrente(e.target.value)} aria-label="Frente" className="rounded-full border border-slate-200 bg-white/80 px-3.5 text-sm shadow-sm backdrop-blur">
             <option value="">Todas as frentes</option>
             <option value="pastagens">Pastagens</option>
             <option value="grandes-culturas">Grandes Culturas</option>
@@ -149,12 +156,13 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
               onDragOver={(e) => { if (podeEditar) { e.preventDefault(); setSobre(col.chave); } }}
               onDragLeave={() => setSobre((s) => (s === col.chave ? null : s))}
               onDrop={() => soltar(col.chave)}
-              className={`entrar flex w-[82vw] max-w-80 shrink-0 snap-start flex-col rounded-2xl p-1.5 ring-1 transition-[background-color,box-shadow] duration-200 sm:w-72 ${sobre === col.chave ? "bg-brand-blue/10 ring-2 ring-brand-blue" : "bg-slate-200/50 ring-slate-200"}`}
+              className={`entrar relative flex w-[82vw] max-w-80 shrink-0 snap-start flex-col overflow-hidden rounded-3xl p-1.5 ring-1 backdrop-blur transition-[background-color,box-shadow] duration-300 sm:w-72 ${sobre === col.chave ? "bg-brand-blue/10 ring-2 ring-brand-blue shadow-brand" : "bg-white/45 ring-slate-200/80"}`}
             >
-              <header className="flex items-center gap-2 px-2.5 pb-2 pt-2">
-                <span aria-hidden className="size-2.5 rounded-full" style={{ background: col.cor }} />
+              <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: col.cor }} />
+              <header className="flex items-center gap-2 px-2.5 pb-2 pt-3">
+                <span aria-hidden className="size-2.5 rounded-full" style={{ background: col.cor, boxShadow: `0 0 0 3px ${col.cor}33` }} />
                 <h2 className="text-sm">{col.nome}</h2>
-                <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-semibold tabular-nums text-slate-600">{lista.length}</span>
+                <span className="ml-auto rounded-full bg-white px-2.5 py-0.5 text-xs font-bold tabular-nums text-slate-700 shadow-sm">{lista.length}</span>
               </header>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-0.5 pb-1">
                 {lista.slice(0, limite).map((c) => (
@@ -163,10 +171,11 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
                     draggable={podeEditar}
                     onDragStart={() => setArrastando(c.id)}
                     onDragEnd={() => { setArrastando(null); setSobre(null); }}
-                    className={`elevar rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-slate-200 ${podeEditar ? "cursor-grab active:cursor-grabbing" : ""} ${arrastando === c.id ? "scale-[0.97] opacity-40" : ""}`}
+                    className={`cartao !rounded-2xl !bg-white p-3 text-sm ${podeEditar ? "cursor-grab active:cursor-grabbing" : ""} ${arrastando === c.id ? "scale-[0.97] opacity-40" : ""}`}
                   >
-                    <Link href={`/clientes/${c.id}`} className="font-semibold leading-snug hover:text-brand-blue">{c.nome}</Link>
-                    <p className="mt-0.5 text-xs text-slate-500">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "Sem cidade"}</p>
+                    <span aria-hidden className="absolute inset-y-2 left-0 w-1 rounded-r-full" style={{ background: col.cor }} />
+                    <Link href={`/clientes/${c.id}`} className="block pl-1 font-semibold leading-snug hover:text-brand-blue">{c.nome}</Link>
+                    <p className="mt-0.5 pl-1 text-xs text-slate-500">{[c.cidade, c.uf].filter(Boolean).join(" / ") || "Sem cidade"}</p>
                     <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
                       {c.frentes.map((f) => <span key={f} className="rounded-full px-2 py-0.5 text-white" style={{ background: f === "pastagens" ? COR_FRENTE.pastagens : COR_FRENTE["grandes-culturas"] }}>{f === "pastagens" ? "Pastagens" : "Grandes Culturas"}</span>)}
                       {c.vendedor_id && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{nomeVendedor.get(c.vendedor_id) ?? ""}</span>}
@@ -208,7 +217,7 @@ export function FunilKanban({ podeEditar }: { podeEditar: boolean }) {
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={() => setPedindoMotivo(null)} className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">Cancelar</button>
               <button disabled={!motivoEscolhido} onClick={() => { void mover(pedindoMotivo.id, "perdido", Number(motivoEscolhido)); setPedindoMotivo(null); }}
-                className="rounded-xl bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-dark disabled:opacity-40">Confirmar</button>
+                className="rounded-xl bg-gradient-to-r from-brand-blue to-brand-teal px-4 py-2.5 text-sm font-semibold text-white shadow-brand disabled:opacity-40 disabled:shadow-none">Confirmar</button>
             </div>
           </div>
         </div>

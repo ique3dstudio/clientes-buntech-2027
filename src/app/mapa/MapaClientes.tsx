@@ -114,8 +114,11 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
             paint: { "text-color": ["get", "cor"], "text-halo-color": "#ffffff", "text-halo-width": 2 } });
         }
         m.addSource("clientes", { type: "geojson", data: { type: "FeatureCollection", features: [] }, cluster: true, clusterRadius: 45, clusterMaxZoom: 11 });
+        m.addLayer({ id: "grupos-halo", type: "circle", source: "clientes", filter: ["has", "point_count"], paint: {
+          "circle-color": "#14a596", "circle-opacity": 0.18, "circle-radius": ["step", ["get", "point_count"], 26, 10, 31, 30, 38],
+        } });
         m.addLayer({ id: "grupos", type: "circle", source: "clientes", filter: ["has", "point_count"], paint: {
-          "circle-color": "#0891d1", "circle-opacity": 0.85, "circle-stroke-width": 3, "circle-stroke-color": "#ffffff",
+          "circle-color": "#0b8fd0", "circle-opacity": 0.92, "circle-stroke-width": 3, "circle-stroke-color": "#ffffff",
           "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 30, 26],
         } });
         if (m.getStyle().glyphs) {
@@ -127,8 +130,10 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
           "circle-stroke-width": 3, "circle-stroke-color": ["get", "borda"],
           "circle-opacity": ["case", ["==", ["get", "precisao"], "exata"], 1, 0.55],
         } });
+        m.addLayer({ id: "pontos-sel-halo", type: "circle", source: "clientes", filter: ["==", ["get", "id"], ""],
+          paint: { "circle-radius": 24, "circle-color": "#0b8fd0", "circle-opacity": 0.2 } });
         m.addLayer({ id: "pontos-sel", type: "circle", source: "clientes", filter: ["==", ["get", "id"], ""],
-          paint: { "circle-radius": 15, "circle-color": "rgba(0,0,0,0)", "circle-stroke-width": 3, "circle-stroke-color": "#0f172a" } });
+          paint: { "circle-radius": 15, "circle-color": "rgba(0,0,0,0)", "circle-stroke-width": 3, "circle-stroke-color": "#0b8fd0" } });
 
         m.on("click", "grupos", async (e) => {
           const f = e.features?.[0]; if (!f) return;
@@ -229,6 +234,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
   useEffect(() => {
     const m = mapaPronto;
     if (m?.getLayer("pontos-sel")) m.setFilter("pontos-sel", ["==", ["get", "id"], selecionadoId ?? ""]);
+    if (m?.getLayer("pontos-sel-halo")) m.setFilter("pontos-sel-halo", ["==", ["get", "id"], selecionadoId ?? ""]);
     if (!selecionadoId) return;
     const c = clientes.find((x) => x.id === selecionadoId);
     if (c?.lat != null && c.lng != null && m) m.easeTo({ center: [c.lng, c.lat], zoom: Math.max(m.getZoom(), 9) });
@@ -246,7 +252,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const chip = (ativo: boolean) =>
-    `flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition-[background-color,color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-blue ${ativo ? "bg-white text-slate-800 shadow-sm ring-slate-300" : "bg-slate-100 text-slate-400 ring-transparent"}`;
+    `flex cursor-pointer select-none items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition-[background-color,color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-blue ${ativo ? "bg-white text-slate-800 shadow-sm ring-brand-blue/40" : "bg-slate-100/80 text-slate-400 ring-transparent"}`;
 
   return (
     <div className="relative flex min-h-0 flex-1">
@@ -254,14 +260,15 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
 
       {/* Barra de filtros */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3 sm:flex-row sm:items-start">
-        <div className="vidro pointer-events-auto entrar w-full max-w-sm rounded-2xl bg-white/90 p-3 shadow-lg ring-1 ring-slate-200/80 backdrop-blur-xl">
+        <div className="vidro pointer-events-auto entrar relative w-full max-w-sm overflow-hidden rounded-3xl bg-white/80 p-4 shadow-lg ring-1 ring-white/70 backdrop-blur-2xl backdrop-saturate-150">
+          <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue to-brand-teal" />
           <div className="flex gap-2">
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar cliente, cidade ou CNPJ"
               aria-label="Buscar"
-              className="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 text-sm"
+              className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 text-sm shadow-sm"
             />
             <button type="button" onClick={() => setFiltrosAbertos((v) => !v)} aria-expanded={filtrosAbertos} className="shrink-0 rounded-xl bg-slate-100 px-3.5 text-sm font-medium text-slate-700 hover:bg-slate-200 sm:hidden">
               Filtros
@@ -295,7 +302,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
             </select>
           </div>
           {podeEditar && (
-            <Link href="/clientes/novo" className="mt-3 block rounded-xl bg-brand-blue px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-brand-blue-dark">
+            <Link href="/clientes/novo" className="mt-3 block rounded-full bg-gradient-to-r from-brand-blue to-brand-teal px-3 py-2.5 text-center text-sm font-semibold text-white shadow-brand">
               + Novo cliente
             </Link>
           )}
@@ -340,7 +347,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
       </div>
 
       {/* Legenda */}
-      <div className="vidro pointer-events-none absolute bottom-6 left-3 z-10 hidden rounded-2xl bg-white/90 p-3.5 text-xs shadow-lg ring-1 ring-slate-200/80 backdrop-blur-xl sm:block">
+      <div className="vidro pointer-events-none absolute bottom-6 left-3 z-10 hidden rounded-3xl bg-white/80 p-4 text-xs shadow-lg ring-1 ring-white/70 backdrop-blur-2xl backdrop-saturate-150 sm:block">
         <p className="font-semibold text-slate-700">Cor = frente · Borda = situação</p>
         <p className="mt-1 text-slate-500">Ponto claro = localizado só pela cidade</p>
         {territorios.length > 0 && (
@@ -357,7 +364,8 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
 
       {/* Ficha */}
       {selecionado && (
-        <aside key={selecionado.id} className="folha-sobe absolute inset-x-0 bottom-0 z-20 max-h-[68%] overflow-y-auto overscroll-contain rounded-t-3xl bg-white p-5 shadow-lg ring-1 ring-slate-200 sm:inset-y-3 sm:right-3 sm:left-auto sm:max-h-none sm:w-96 sm:rounded-3xl">
+        <aside key={selecionado.id} className="folha-sobe absolute inset-x-0 bottom-0 z-20 max-h-[68%] overflow-y-auto overscroll-contain rounded-t-3xl bg-white/90 p-5 shadow-lg ring-1 ring-white/70 backdrop-blur-2xl sm:inset-y-3 sm:right-3 sm:left-auto sm:max-h-none sm:w-96 sm:rounded-3xl">
+          <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue to-brand-teal" />
           <div className="mx-auto -mt-1 mb-3 h-1.5 w-10 rounded-full bg-slate-200 sm:hidden" />
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -366,11 +374,11 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
             </div>
             <button onClick={() => setSelecionadoId(null)} className="grid size-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100" aria-label="Fechar"><X size={20} /></button>
           </div>
-          <Link href={`/clientes/${selecionado.id}`} className="mt-3 mr-2 inline-block rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue-dark">
+          <Link href={`/clientes/${selecionado.id}`} className="mt-3 mr-2 inline-block rounded-full bg-gradient-to-r from-brand-blue to-brand-teal px-4 py-2 text-sm font-semibold text-white shadow-brand">
             Ficha completa
           </Link>
           {podeEditar && (
-            <Link href={`/clientes/${selecionado.id}/editar`} className="mt-3 inline-block rounded-xl px-4 py-2 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">
+            <Link href={`/clientes/${selecionado.id}/editar`} className="mt-3 inline-block rounded-full px-4 py-2 text-sm font-medium text-brand-blue ring-1 ring-brand-blue/40 hover:bg-sky-50">
               Editar cliente
             </Link>
           )}
