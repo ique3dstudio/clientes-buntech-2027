@@ -24,3 +24,30 @@ describe("rotas", () => {
     expect(linkGoogleMaps(origem, [])).toBeNull();
   });
 });
+
+import { criarTrajeto, itensNoTrajeto, linkGoogleMapsViagem, posicaoNoTrajeto } from "./rotas";
+
+describe("viagem", () => {
+  // linha reta de oeste para leste no equador: 0°→2° (≈ 222 km)
+  const t = criarTrajeto([[0, 0], [1, 0], [2, 0]]);
+  it("mede o trajeto", () => {
+    expect(t.totalKm).toBeGreaterThan(220);
+    expect(t.totalKm).toBeLessThan(224);
+  });
+  it("acha a posição e o desvio de um ponto", () => {
+    const p = posicaoNoTrajeto(t, 0.1, 1);
+    expect(p.kmDaRota).toBeGreaterThan(10);
+    expect(p.kmDaRota).toBeLessThan(12);
+    expect(p.kmNoTrajeto).toBeGreaterThan(110);
+    expect(p.kmNoTrajeto).toBeLessThan(112);
+  });
+  it("filtra pelo corredor e ordena pela viagem", () => {
+    const r = itensNoTrajeto(t, [{ id: "a", lat: 0.05, lng: 1.5 }, { id: "b", lat: 0.05, lng: 0.5 }, { id: "longe", lat: 3, lng: 1 }], 20);
+    expect(r.map((x) => x.id)).toEqual(["b", "a"]);
+  });
+  it("monta o link da viagem com paradas", () => {
+    const l = linkGoogleMapsViagem({ lat: 1, lng: 2 }, { lat: 3, lng: 4 }, [{ lat: 2, lng: 3 }]);
+    expect(l).toContain("origin=1.000000%2C2.000000");
+    expect(l).toContain("waypoints=2.000000%2C3.000000");
+  });
+});

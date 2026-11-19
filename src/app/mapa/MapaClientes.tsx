@@ -4,10 +4,12 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapaGL, GeoJSONSource } from "maplibre-gl";
 import Link from "next/link";
-import { Warning, X } from "@phosphor-icons/react";
+import { MagnifyingGlass, Warning, X } from "@phosphor-icons/react";
 import { BRASIL, criarMapa } from "@/lib/geo/maplibre";
 import { createClient } from "@/lib/supabase/client";
 import { normalizar } from "@/lib/texto";
+import { carregarMunicipios, type Municipio } from "@/lib/geo/municipios";
+import { circuloGeoJSON, linkBuscaSementeiras } from "@/lib/buscasementeiras";
 import {
   COR_FRENTE, COR_STATUS, ROTULO_STATUS, corDaFrente, mesesSemComprar, type ClienteMapa,
 } from "@/lib/clientes";
@@ -38,6 +40,11 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
   const [mostrarTerritorios, setMostrarTerritorios] = useState(true);
   const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [fichaCarregada, setFicha] = useState<Ficha | null>(null);
+  // "Buscar sementeiras na região": escolhe um ponto no mapa e abre o buscasementeiras
+  const [escolhendoLocal, setEscolhendoLocal] = useState(false);
+  const [local, setLocal] = useState<{ lat: number; lng: number; mun: Municipio } | null>(null);
+  const [raioBusca, setRaioBusca] = useState(70);
+  const escolhendoRef = useRef(false);
   const ficha = fichaCarregada?.id === selecionadoId ? fichaCarregada : null;
 
   // 1) dados
@@ -129,7 +136,7 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
           const zoom = await src.getClusterExpansionZoom(f.properties.cluster_id as number);
           m.easeTo({ center: (f.geometry as unknown as { coordinates: [number, number] }).coordinates, zoom });
         });
-        m.on("click", "pontos", (e) => { const id = e.features?.[0]?.properties?.id as string | undefined; if (id) setSelecionadoId(id); });
+        m.on("click", "pontos", (e) => { if (escolhendoRef.current) return; const id = e.features?.[0]?.properties?.id as string | undefined; if (id) setSelecionadoId(id); });
         for (const l of ["grupos", "pontos"]) {
           m.on("mouseenter", l, () => (m.getCanvas().style.cursor = "pointer"));
           m.on("mouseleave", l, () => (m.getCanvas().style.cursor = ""));
@@ -178,6 +185,45 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
       if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", mostrarTerritorios ? "visible" : "none");
     }
   }, [mapaPronto, mostrarTerritorios]);
+
+  // 3c) buscar sementeiras na região: clique escolhe o local; o círculo mostra o raio
+  useEffect(() => { escolhendoRef.current = escolhendoLocal; }, [escolhendoLocal]);
+  useEffect(() => {
+    const m = mapaPronto;
+    if (!m || !escolhendoLocal) return;
+    m.getCanvas().style.cursor = "crosshair";
+    let vivo = true;
+    const aoClicar = async (e: { lngLat: { lat: number; lng: number } }) => {
+      const { lat, lng } = e.lngLat;
+      const idx = await carregarMunicipios();
+      if (!vivo) return;
+      setLocal({ lat, lng, mun: idx.maisProximo(lat, lng) });
+      setEscolhendoLocal(false);
+    };
+    m.on("click", aoClicar);
+    return () => { vivo = false; m.off("click", aoClicar); m.getCanvas().style.cursor = ""; };
+  }, [mapaPronto, escolhendoLocal]);
+
+  useEffect(() => {
+    const m = mapaPronto;
+    if (!m) return;
+    if (!m.getSource("busca-raio")) {
+      m.addSource("busca-raio", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      m.addLayer({ id: "busca-raio-fundo", type: "fill", source: "busca-raio", paint: { "fill-color": "#0b8fd0", "fill-opacity": 0.08 } });
+      m.addLayer({ id: "busca-raio-borda", type: "line", source: "busca-raio", paint: { "line-color": "#0b8fd0", "line-width": 2.5, "line-dasharray": [2, 2] } });
+      m.addSource("busca-centro", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      m.addLayer({ id: "busca-centro", type: "circle", source: "busca-centro", paint: { "circle-radius": 8, "circle-color": "#0b8fd0", "circle-stroke-width": 3, "circle-stroke-color": "#ffffff" } });
+    }
+    const raio = m.getSource("busca-raio") as GeoJSONSource;
+    const centro = m.getSource("busca-centro") as GeoJSONSource;
+    if (!local) {
+      raio.setData({ type: "FeatureCollection", features: [] });
+      centro.setData({ type: "FeatureCollection", features: [] });
+      return;
+    }
+    raio.setData({ type: "Feature", geometry: circuloGeoJSON(local.lat, local.lng, raioBusca), properties: {} });
+    centro.setData({ type: "Feature", geometry: { type: "Point", coordinates: [local.lng, local.lat] }, properties: {} });
+  }, [mapaPronto, local, raioBusca]);
 
   // 4) seleção + ficha
   useEffect(() => {
@@ -257,6 +303,34 @@ export function MapaClientes({ podeEditar, selecionadoInicial }: { podeEditar: b
           <p className="mt-3 text-xs text-slate-500">
             <span className="font-semibold tabular-nums text-slate-700">{visiveis.length}</span> no mapa{semLocal > 0 && <> · {semLocal} sem localização</>}
           </p>
+          <div className="mt-3 border-t border-slate-200 pt-3">
+            {!escolhendoLocal && !local && (
+              <button type="button" onClick={() => setEscolhendoLocal(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+                <MagnifyingGlass size={18} /> Buscar sementeiras na região
+              </button>
+            )}
+            {escolhendoLocal && (
+              <div className="rounded-xl bg-brand-blue/10 p-3 text-sm text-slate-700">
+                <p className="font-medium">Toque no mapa no lugar que você quer pesquisar.</p>
+                <button type="button" onClick={() => setEscolhendoLocal(false)} className="mt-1 text-xs text-slate-500 underline">Cancelar</button>
+              </div>
+            )}
+            {local && (
+              <div className="space-y-2 rounded-xl bg-brand-blue/10 p-3 text-sm">
+                <p>Perto de <strong>{local.mun.nome}/{local.mun.uf}</strong></p>
+                <label className="block text-xs text-slate-600">Raio: <strong>{raioBusca} km</strong>
+                  <input type="range" min={10} max={200} step={5} value={raioBusca} onChange={(e) => setRaioBusca(Number(e.target.value))} className="mt-1 w-full accent-brand-blue" />
+                </label>
+                <a href={linkBuscaSementeiras(local.mun.nome, local.mun.uf, raioBusca)} target="_blank" rel="noreferrer" className="block rounded-xl bg-brand-blue px-3 py-2.5 text-center font-semibold text-white hover:bg-brand-blue-dark">
+                  Abrir busca de sementeiras
+                </a>
+                <div className="flex justify-between text-xs">
+                  <button type="button" onClick={() => setEscolhendoLocal(true)} className="text-brand-blue underline">Escolher outro local</button>
+                  <button type="button" onClick={() => setLocal(null)} className="text-slate-500 underline">Limpar</button>
+                </div>
+              </div>
+            )}
+          </div>
           {erro && <p className="mt-1 text-xs text-red-600">{erro}</p>}
           {avisoMapa && <p className="mt-1 text-xs text-amber-600">{avisoMapa}</p>}
           {clientes.length === 0 && !erro && (
