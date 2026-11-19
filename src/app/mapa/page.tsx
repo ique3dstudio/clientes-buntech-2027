@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { podeEscrever } from "@/lib/papeis";
 import { Suspense } from "react";
 import { getUsuario } from "@/lib/auth";
 import { Cabecalho } from "@/components/Cabecalho";
@@ -23,7 +24,7 @@ async function Mapa({ searchParams }: { searchParams: PageProps<"/mapa">["search
   return (
     <div className="tela-cheia flex flex-col">
       <Cabecalho usuario={usuario} />
-      <MapaClientes podeEditar={usuario.papel !== "leitura"} selecionadoInicial={typeof c === "string" ? c : undefined} />
+      <MapaClientes podeEditar={podeEscrever(usuario.papel)} selecionadoInicial={typeof c === "string" ? c : undefined} />
     </div>
   );
 }

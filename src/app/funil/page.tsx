@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { podeEscrever } from "@/lib/papeis";
 import { Suspense } from "react";
 import { getUsuario } from "@/lib/auth";
 import { Cabecalho } from "@/components/Cabecalho";
@@ -22,7 +23,7 @@ async function Conteudo() {
   return (
     <div className="tela-cheia flex flex-col">
       <Cabecalho usuario={usuario} />
-      <FunilKanban podeEditar={usuario.papel !== "leitura"} />
+      <FunilKanban podeEditar={podeEscrever(usuario.papel)} />
     </div>
   );
 }

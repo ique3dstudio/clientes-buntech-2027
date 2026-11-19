@@ -36,7 +36,7 @@ const numero = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".
 
 export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: string; papel: Papel; vendedorId: string | null }) {
   const router = useRouter();
-  const gestao = papel === "admin" || papel === "gerente";
+  const gestao = papel === "admin";
   const [f, setF] = useState<Form>(VAZIO);
   const [frentes, setFrentes] = useState<Set<string>>(new Set(["pastagens"]));
   const [ponto, setPonto] = useState<Ponto | null>(null);

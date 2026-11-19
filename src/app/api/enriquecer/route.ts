@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { podeEscrever, type Papel } from "@/lib/papeis";
 import { createClient } from "@/lib/supabase/server";
 import { normalizar } from "@/lib/texto";
 import { escolherSites, extrairCnpjs, extrairEmails, extrairTelefones, similaridade, type ResultadoBusca } from "@/lib/enriquecimento";
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ erro: "nao_autenticado" }, { status: 401 });
   const { data: perfil } = await supabase.from("perfis").select("papel").eq("id", auth.user.id).single();
-  if (!perfil || perfil.papel === "pendente" || perfil.papel === "leitura") return NextResponse.json({ erro: "sem_permissao" }, { status: 403 });
+  if (!perfil || !podeEscrever(perfil.papel as Papel)) return NextResponse.json({ erro: "sem_permissao" }, { status: 403 });
 
   const chave = process.env.FIRECRAWL_API_KEY;
   if (!chave) return NextResponse.json({ erro: "nao_configurado" }, { status: 501 });

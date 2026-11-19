@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { podeExportarDados } from "@/lib/papeis";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getUsuario } from "@/lib/auth";
@@ -19,7 +20,7 @@ export default function ExportarPage() {
 async function Conteudo() {
   const usuario = await getUsuario();
   // representante externo e somente leitura não exportam (regra do plano)
-  if (!["admin", "gerente", "vendedor"].includes(usuario.papel)) redirect("/");
+  if (!podeExportarDados(usuario.papel)) redirect("/");
   return (
     <>
       <Cabecalho usuario={usuario} />

@@ -62,13 +62,13 @@ const PASSOS: { titulo: string; itens: string[] }[] = [
     itens: [
       "Painel: cobertura por território, funil, faturamento, maiores clientes, atividade por vendedor e clientes em risco (6+ meses sem comprar).",
       "Relatório mensal: abra, clique em “Imprimir / Salvar PDF” e escolha “Salvar como PDF”. Use na reunião da diretoria.",
-      "Exportar (Excel/CSV): só administrador, gerente e vendedor. Representante externo e leitura não exportam.",
+      "Exportar (Excel/CSV): só administrador, gerente, coordenador e vendedor. Representante externo e leitura não exportam.",
     ],
   },
   {
     titulo: "7. Administrador",
     itens: [
-      "Usuários: aprove novos acessos e defina o perfil (administrador, gerente, vendedor, externo, leitura) e o vendedor ligado.",
+      "Usuários: aprove novos acessos e defina o perfil (administrador, gerente, coordenador, vendedor, externo, leitura) e o vendedor ligado.",
       "Territórios: defina o responsável de cada território e mova municípios entre territórios; os clientes são reatribuídos automaticamente.",
       "Importar: planilhas de clientes. Completar dados: busca CNPJ, site, e-mail e telefone na internet — sempre revise antes de confiar.",
       "Cuidado com LGPD: não compartilhe planilhas de clientes por mensageiros nem as guarde em repositórios.",

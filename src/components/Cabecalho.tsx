@@ -10,7 +10,7 @@ import {
 import { sair } from "@/app/actions";
 import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/Avatar";
-import { ROTULO_PAPEL } from "@/lib/papeis";
+import { ROTULO_PAPEL, podeExportarDados } from "@/lib/papeis";
 import type { Usuario } from "@/lib/auth";
 
 type Item = { href: string; rotulo: string; icone: Icon };
@@ -18,7 +18,7 @@ type Item = { href: string; rotulo: string; icone: Icon };
 export function Cabecalho({ usuario }: { usuario: Usuario }) {
   const caminho = usePathname();
   const [aberto, setAberto] = useState(false);
-  const podeExportar = ["admin", "gerente", "vendedor"].includes(usuario.papel);
+  const podeExportar = podeExportarDados(usuario.papel);
   const admin = usuario.papel === "admin";
 
   const principais: Item[] = [

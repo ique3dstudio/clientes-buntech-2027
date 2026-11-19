@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { podeEscrever } from "@/lib/papeis";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getUsuario } from "@/lib/auth";
@@ -18,7 +19,7 @@ export default function NovoClientePage() {
 
 async function Conteudo() {
   const usuario = await getUsuario();
-  if (usuario.papel === "pendente" || usuario.papel === "leitura") redirect("/mapa");
+  if (!podeEscrever(usuario.papel)) redirect("/mapa");
   return (
     <>
       <Cabecalho usuario={usuario} />
