@@ -240,10 +240,12 @@ async function Ficha({ params }: { params: PageProps<"/clientes/[id]">["params"]
                 <Linha t="Telefone" v={c.telefone} />
                 <Linha t="Endereço da unidade" v={c.endereco} />
                 <Linha t="CEP" v={c.cep} />
+                <Linha t="Trata sementes?" v={c.trata_sementes === "sim" ? "Sim" : c.trata_sementes === "nao" ? "Não" : null} />
                 <Linha t="Equipamento" v={c.equipamento} />
                 <Linha t="Condição de pagamento" v={c.condicao_pagamento} />
                 <Linha t="Origem" v={c.origem} />
                 <Linha t="Cadastrado em" v={dataBr(c.cadastrado_em)} />
+                {!c.trata_sementes && <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800 ring-1 ring-sky-200">Pergunte no primeiro contato: a empresa trata sementes? Registre a resposta em Editar.</p>}
                 {c.localizacao_precisao === "cidade" && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">Local aproximado (centro da cidade). Edite para marcar a unidade de produção.</p>}
               </dl>
             </Cartao>

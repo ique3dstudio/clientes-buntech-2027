@@ -15,7 +15,7 @@ type Form = {
   nome: string; razao_social: string; documento: string; site: string; email: string; telefone: string;
   endereco: string; cep: string; cidade: string; uf: string; municipio_ibge: string;
   status: "prospect" | "carteira" | "perdido"; etapa_id: string; motivo_perda_id: string; vendedor_id: string;
-  porte: string; equipamento: string; potencial_ton_ano: string; ritmo_ton_mes: string;
+  porte: string; trata_sementes: string; equipamento: string; potencial_ton_ano: string; ritmo_ton_mes: string;
   alerta_financeiro: string; condicao_pagamento: string; observacoes: string;
 };
 type ContatoForm = { nome: string; cargo: string; telefone: string; email: string };
@@ -24,7 +24,7 @@ const CONTATO_VAZIO: ContatoForm = { nome: "", cargo: "", telefone: "", email: "
 
 const VAZIO: Form = {
   nome: "", razao_social: "", documento: "", site: "", email: "", telefone: "", endereco: "", cep: "", cidade: "", uf: "",
-  municipio_ibge: "", status: "prospect", etapa_id: "", motivo_perda_id: "", vendedor_id: "", porte: "", equipamento: "",
+  municipio_ibge: "", status: "prospect", etapa_id: "", motivo_perda_id: "", vendedor_id: "", porte: "", trata_sementes: "", equipamento: "",
   potencial_ton_ano: "", ritmo_ton_mes: "", alerta_financeiro: "", condicao_pagamento: "", observacoes: "",
 };
 
@@ -88,7 +88,7 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
         nome: s(d.nome), razao_social: s(d.razao_social), documento: d.documento ? formatarDocumento(d.documento) : "",
         site: s(d.site), email: s(d.email), telefone: s(d.telefone), endereco: s(d.endereco), cep: s(d.cep), cidade: s(d.cidade),
         uf: s(d.uf).trim(), municipio_ibge: s(d.municipio_ibge), status: d.status, etapa_id: s(d.etapa_id), motivo_perda_id: s(d.motivo_perda_id),
-        vendedor_id: s(d.vendedor_id), porte: s(d.porte), equipamento: s(d.equipamento), potencial_ton_ano: s(d.potencial_ton_ano),
+        vendedor_id: s(d.vendedor_id), porte: s(d.porte), trata_sementes: s(d.trata_sementes), equipamento: s(d.equipamento), potencial_ton_ano: s(d.potencial_ton_ano),
         ritmo_ton_mes: s(d.ritmo_ton_mes), alerta_financeiro: s(d.alerta_financeiro), condicao_pagamento: s(d.condicao_pagamento),
         observacoes: s(d.observacoes),
       });
@@ -198,7 +198,7 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
       telefone: nulo(f.telefone), endereco: nulo(f.endereco), cep: nulo(f.cep), cidade: nulo(f.cidade), uf: nulo(f.uf),
       municipio_ibge: nulo(f.municipio_ibge), status: f.status, etapa_id: f.etapa_id ? Number(f.etapa_id) : null,
       motivo_perda_id: f.status === "perdido" && f.motivo_perda_id ? Number(f.motivo_perda_id) : null,
-      porte: nulo(f.porte), equipamento: nulo(f.equipamento), potencial_ton_ano: numero(f.potencial_ton_ano),
+      porte: nulo(f.porte), trata_sementes: nulo(f.trata_sementes), equipamento: nulo(f.equipamento), potencial_ton_ano: numero(f.potencial_ton_ano),
       ritmo_ton_mes: numero(f.ritmo_ton_mes), alerta_financeiro: nulo(f.alerta_financeiro),
       condicao_pagamento: nulo(f.condicao_pagamento), observacoes: nulo(f.observacoes),
       localizacao: ponto ? `SRID=4326;POINT(${ponto.lng} ${ponto.lat})` : null,
@@ -401,6 +401,11 @@ export function ClienteForm({ clienteId, papel, vendedorId }: { clienteId?: stri
         <label className="block">{rotulo("Porte")}
           <select className={campo} value={f.porte} onChange={(e) => set("porte", e.target.value)}>
             <option value="" /><option>Pequeno</option><option>Médio</option><option>Grande</option>
+          </select>
+        </label>
+        <label className="block">{rotulo("Trata sementes?")}
+          <select className={campo} value={f.trata_sementes} onChange={(e) => set("trata_sementes", e.target.value)}>
+            <option value="">Ainda não perguntei</option><option value="sim">Sim</option><option value="nao">Não</option>
           </select>
         </label>
         <label className="block">{rotulo("Equipamento")}<input className={campo} value={f.equipamento} onChange={(e) => set("equipamento", e.target.value)} placeholder="Betoneira, Coater…" /></label>
